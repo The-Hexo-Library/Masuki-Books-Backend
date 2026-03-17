@@ -41,20 +41,20 @@ public class ProductController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(@Valid @RequestBody ProductRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Product created", productService.createProduct(request)));
     }
 
     @PutMapping("/{productId}")
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(@PathVariable UUID productId,
                                                                       @RequestBody ProductRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Product updated", productService.updateProduct(productId, request)));
     }
 
     @DeleteMapping("/{productId}")
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable UUID productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.ok(ApiResponse.success("Product deleted", null));

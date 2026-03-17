@@ -51,6 +51,7 @@ public class ProductService {
                 .description(request.getDescription())
                 .author(request.getAuthor())
                 .publisher(request.getPublisher())
+                .language(request.getLanguage() != null ? request.getLanguage() : "en")
                 .format(request.getFormat())
                 .pages(request.getPages())
                 .publicationDate(request.getPublicationDate())
@@ -96,6 +97,7 @@ public class ProductService {
         if (request.getDescription() != null) product.setDescription(request.getDescription());
         if (request.getAuthor() != null) product.setAuthor(request.getAuthor());
         if (request.getPrice() != null) product.setPrice(request.getPrice());
+        if (request.getLanguage() != null) product.setLanguage(request.getLanguage());
         if (request.getStatus() != null) product.setStatus(request.getStatus());
 
         // Digital content fields

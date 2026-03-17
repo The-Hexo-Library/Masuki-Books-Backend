@@ -27,6 +27,7 @@ public class ProductRequest {
     @NotBlank
     private String format;  // paperback, hardcover, ebook, audiobook
 
+    private String language;
     private Integer pages;
     private LocalDate publicationDate;
 

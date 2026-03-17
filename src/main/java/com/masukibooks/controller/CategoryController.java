@@ -34,20 +34,20 @@ public class CategoryController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<Category>> createCategory(@RequestBody Category category) {
         return ResponseEntity.ok(ApiResponse.success("Category created", categoryService.createCategory(category)));
     }
 
     @PutMapping("/{categoryId}")
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<Category>> updateCategory(@PathVariable UUID categoryId,
                                                                 @RequestBody Category updates) {
         return ResponseEntity.ok(ApiResponse.success("Category updated", categoryService.updateCategory(categoryId, updates)));
     }
 
     @DeleteMapping("/{categoryId}")
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable UUID categoryId) {
         categoryService.deleteCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.success("Category deleted", null));

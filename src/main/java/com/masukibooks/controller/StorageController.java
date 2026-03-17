@@ -27,7 +27,7 @@ public class StorageController {
      * Upload a book cover image and link it to a product.
      */
     @PostMapping(value = "/products/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadProductImage(
             @PathVariable UUID productId,
             @RequestParam("file") MultipartFile file,
@@ -50,7 +50,7 @@ public class StorageController {
      * Upload a general file to a specified folder (e.g., ebooks, audiobooks).
      */
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<Map<String, String>>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "folder", defaultValue = "general") String folder) {
@@ -72,7 +72,7 @@ public class StorageController {
      * Delete a file by its key.
      */
     @DeleteMapping("/files")
-    @PreAuthorize("hasAnyRole('admin','superadmin')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteFile(@RequestParam("key") String key) {
         storageService.deleteFile(key);
         return ResponseEntity.ok(ApiResponse.success("File deleted", null));

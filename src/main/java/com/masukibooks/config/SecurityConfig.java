@@ -55,6 +55,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/reader/**").authenticated()
                 // Library — require ROLE_USER
                 .requestMatchers("/api/v1/library/**").authenticated()
+                // Wallet — require authentication
+                .requestMatchers("/api/v1/wallet/**").authenticated()
+                // Resale marketplace — public browse, auth for actions
+                .requestMatchers(HttpMethod.GET, "/api/v1/resale/marketplace").permitAll()
+                .requestMatchers("/api/v1/resale/**").authenticated()
                 // Support tickets — require authentication
                 .requestMatchers("/api/v1/support-tickets/**").authenticated()
                 // Download token generation — require authentication

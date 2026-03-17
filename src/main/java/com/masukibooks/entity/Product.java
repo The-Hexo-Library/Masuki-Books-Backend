@@ -44,6 +44,7 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Builder.Default
     @Column(nullable = false, length = 10)
     private String language = "en";
 

@@ -25,7 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('admin','superadmin')")
+@PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
 public class AdminController {
 
     private final ProductService productService;
