@@ -55,6 +55,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/reader/**").authenticated()
                 // Library — require ROLE_USER
                 .requestMatchers("/api/v1/library/**").authenticated()
+                // Support tickets — require authentication
+                .requestMatchers("/api/v1/support-tickets/**").authenticated()
                 // Download token generation — require authentication
                 .requestMatchers(HttpMethod.POST, "/api/v1/downloads/*/token").authenticated()
                 // Admin endpoints

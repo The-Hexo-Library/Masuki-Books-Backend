@@ -7,6 +7,8 @@ import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.AddressRepository;
 import com.masukibooks.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,5 +83,23 @@ public class UserService {
             throw new BusinessException("Address does not belong to this user");
         }
         addressRepository.delete(address);
+    }
+
+    // ---- Admin user management ----
+
+    public Page<User> listUsers(Pageable pageable) {
+        return userRepository.findAll(pageable);
+    }
+
+    public User getUserById(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    }
+
+    @Transactional
+    public User updateUserStatus(UUID userId, String status) {
+        User user = getUserById(userId);
+        user.setStatus(status);
+        return userRepository.save(user);
     }
 }

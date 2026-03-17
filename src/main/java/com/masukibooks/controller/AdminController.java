@@ -3,13 +3,11 @@ package com.masukibooks.controller;
 import com.masukibooks.dto.request.DiscountCodeRequest;
 import com.masukibooks.dto.request.ProductRequest;
 import com.masukibooks.dto.response.ApiResponse;
+import com.masukibooks.dto.response.DashboardStatsResponse;
 import com.masukibooks.dto.response.OrderResponse;
 import com.masukibooks.dto.response.ProductResponse;
-import com.masukibooks.entity.DiscountCode;
-import com.masukibooks.entity.Inventory;
-import com.masukibooks.entity.Product;
-import com.masukibooks.entity.Refund;
-import com.masukibooks.entity.Review;
+import com.masukibooks.dto.response.SupportTicketResponse;
+import com.masukibooks.entity.*;
 import com.masukibooks.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,6 +36,77 @@ public class AdminController {
     private final RefundService refundService;
     private final ShipmentService shipmentService;
     private final DigitalBookProcessingService digitalBookProcessingService;
+    private final DashboardService dashboardService;
+    private final SupportTicketService supportTicketService;
+    private final UserService userService;
+
+    // ---- Dashboard ----
+
+    @GetMapping("/dashboard/stats")
+    public ResponseEntity<ApiResponse<DashboardStatsResponse>> getDashboardStats() {
+        return ResponseEntity.ok(ApiResponse.success("Dashboard stats retrieved",
+                dashboardService.getDashboardStats()));
+    }
+
+    // ---- Support Tickets ----
+
+    @GetMapping("/support-tickets")
+    public ResponseEntity<ApiResponse<Page<SupportTicketResponse>>> getAllTickets(
+            @RequestParam(required = false) String status,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success("Support tickets retrieved",
+                supportTicketService.getAllTickets(status, pageable)));
+    }
+
+    @GetMapping("/support-tickets/{ticketId}")
+    public ResponseEntity<ApiResponse<SupportTicketResponse>> getTicket(@PathVariable UUID ticketId) {
+        return ResponseEntity.ok(ApiResponse.success("Ticket retrieved",
+                supportTicketService.getTicket(ticketId)));
+    }
+
+    @PatchMapping("/support-tickets/{ticketId}/respond")
+    public ResponseEntity<ApiResponse<SupportTicketResponse>> respondToTicket(
+            @PathVariable UUID ticketId,
+            @RequestBody Map<String, String> body) {
+        String response = body.get("response");
+        String status = body.get("status");
+        String adminIdStr = body.get("adminId");
+        UUID adminId = adminIdStr != null ? UUID.fromString(adminIdStr) : null;
+        return ResponseEntity.ok(ApiResponse.success("Ticket updated",
+                supportTicketService.respondToTicket(ticketId, response, status, adminId)));
+    }
+
+    @PatchMapping("/support-tickets/{ticketId}/assign")
+    public ResponseEntity<ApiResponse<SupportTicketResponse>> assignTicket(
+            @PathVariable UUID ticketId,
+            @RequestBody Map<String, String> body) {
+        UUID adminId = UUID.fromString(body.get("adminId"));
+        return ResponseEntity.ok(ApiResponse.success("Ticket assigned",
+                supportTicketService.assignTicket(ticketId, adminId)));
+    }
+
+    // ---- User Management ----
+
+    @GetMapping("/users")
+    public ResponseEntity<ApiResponse<Page<User>>> listUsers(
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success("Users retrieved",
+                userService.listUsers(pageable)));
+    }
+
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ApiResponse<User>> getUser(@PathVariable UUID userId) {
+        return ResponseEntity.ok(ApiResponse.success("User retrieved",
+                userService.getUserById(userId)));
+    }
+
+    @PatchMapping("/users/{userId}/status")
+    public ResponseEntity<ApiResponse<User>> updateUserStatus(
+            @PathVariable UUID userId,
+            @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(ApiResponse.success("User status updated",
+                userService.updateUserStatus(userId, body.get("status"))));
+    }
 
     // ---- Orders ----
 
