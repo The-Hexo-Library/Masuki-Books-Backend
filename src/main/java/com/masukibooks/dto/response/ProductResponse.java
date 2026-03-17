@@ -31,4 +31,11 @@ public class ProductResponse {
     private Double averageRating;
     private List<String> imageUrls;
     private LocalDateTime createdAt;
+
+    // Digital content fields
+    private String contentType;
+    private String fileFormat;
+    private Integer totalPages;
+    private Integer previewPages;
+    private boolean downloadable;
 }

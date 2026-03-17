@@ -49,6 +49,14 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health").permitAll()
                 // Cart — accessible with guest token
                 .requestMatchers("/api/v1/cart/**").permitAll()
+                // Download file — public (token-validated server-side)
+                .requestMatchers(HttpMethod.GET, "/api/v1/downloads/file/**").permitAll()
+                // Reader metadata — allow authenticated (access check in service layer)
+                .requestMatchers("/api/v1/reader/**").authenticated()
+                // Library — require ROLE_USER
+                .requestMatchers("/api/v1/library/**").authenticated()
+                // Download token generation — require authentication
+                .requestMatchers(HttpMethod.POST, "/api/v1/downloads/*/token").authenticated()
                 // Admin endpoints
                 .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "MODERATOR")
                 // All others require auth

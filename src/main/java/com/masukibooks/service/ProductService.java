@@ -57,16 +57,27 @@ public class ProductService {
                 .price(request.getPrice())
                 .compareAtPrice(request.getCompareAtPrice())
                 .status(request.getStatus() != null ? request.getStatus() : "draft")
+                .contentType(request.getContentType() != null ? request.getContentType() : "physical")
+                .fileFormat(request.getFileFormat())
+                .fileSizeBytes(request.getFileSizeBytes())
+                .totalPages(request.getTotalPages())
+                .previewPages(request.getPreviewPages() != null ? request.getPreviewPages() : 10)
+                .downloadable(request.getDownloadable() != null ? request.getDownloadable() : false)
+                .maxDownloads(request.getMaxDownloads() != null ? request.getMaxDownloads() : 3)
                 .build();
 
         product = productRepository.save(product);
 
-        Inventory inventory = Inventory.builder()
-                .product(product)
-                .quantity(0)
-                .lowStockThreshold(5)
-                .build();
-        inventoryRepository.save(inventory);
+        // Only create inventory for physical products
+        boolean isDigital = "digital".equals(product.getContentType());
+        if (!isDigital) {
+            Inventory inventory = Inventory.builder()
+                    .product(product)
+                    .quantity(0)
+                    .lowStockThreshold(5)
+                    .build();
+            inventoryRepository.save(inventory);
+        }
 
         return toResponse(product);
     }
@@ -86,6 +97,15 @@ public class ProductService {
         if (request.getAuthor() != null) product.setAuthor(request.getAuthor());
         if (request.getPrice() != null) product.setPrice(request.getPrice());
         if (request.getStatus() != null) product.setStatus(request.getStatus());
+
+        // Digital content fields
+        if (request.getContentType() != null) product.setContentType(request.getContentType());
+        if (request.getFileFormat() != null) product.setFileFormat(request.getFileFormat());
+        if (request.getFileSizeBytes() != null) product.setFileSizeBytes(request.getFileSizeBytes());
+        if (request.getTotalPages() != null) product.setTotalPages(request.getTotalPages());
+        if (request.getPreviewPages() != null) product.setPreviewPages(request.getPreviewPages());
+        if (request.getDownloadable() != null) product.setDownloadable(request.getDownloadable());
+        if (request.getMaxDownloads() != null) product.setMaxDownloads(request.getMaxDownloads());
 
         return toResponse(productRepository.save(product));
     }
@@ -112,6 +132,7 @@ public class ProductService {
     }
 
     private ProductResponse toResponse(Product p) {
+        boolean isDigital = "digital".equals(p.getContentType()) || "both".equals(p.getContentType());
         Inventory inv = inventoryRepository.findByProductProductId(p.getProductId()).orElse(null);
         int stock = inv != null ? inv.getQuantity() : 0;
         Double avgRating = reviewRepository.getAverageRatingByProductId(p.getProductId());
@@ -132,10 +153,15 @@ public class ProductService {
                 .publicationDate(p.getPublicationDate())
                 .price(p.getPrice())
                 .status(p.getStatus())
-                .stockQuantity(stock)
-                .inStock(stock > 0)
+                .stockQuantity(isDigital ? null : stock)
+                .inStock(isDigital || stock > 0)
                 .averageRating(avgRating)
                 .imageUrls(imageUrls)
+                .contentType(p.getContentType())
+                .fileFormat(p.getFileFormat())
+                .totalPages(p.getTotalPages())
+                .previewPages(p.getPreviewPages())
+                .downloadable(Boolean.TRUE.equals(p.getDownloadable()))
                 .build();
     }
 }

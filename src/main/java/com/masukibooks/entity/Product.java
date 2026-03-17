@@ -68,6 +68,35 @@ public class Product {
     @JoinColumn(name = "created_by")
     private AdminUser createdBy;
 
+    // Digital content fields
+    @Builder.Default
+    @Column(name = "content_type", length = 20)
+    private String contentType = "physical";  // physical, digital, both
+
+    @Column(name = "file_key", length = 500)
+    private String fileKey;  // S3 key for the digital file (PDF/EPUB)
+
+    @Column(name = "file_format", length = 20)
+    private String fileFormat;  // pdf, epub
+
+    @Column(name = "file_size_bytes")
+    private Long fileSizeBytes;
+
+    @Column(name = "total_pages")
+    private Integer totalPages;  // for digital reader pagination
+
+    @Builder.Default
+    @Column(name = "preview_pages")
+    private Integer previewPages = 10;  // number of free preview pages
+
+    @Builder.Default
+    @Column(name = "downloadable")
+    private Boolean downloadable = false;  // whether offline download is allowed
+
+    @Builder.Default
+    @Column(name = "max_downloads")
+    private Integer maxDownloads = 3;  // per-purchase download limit
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

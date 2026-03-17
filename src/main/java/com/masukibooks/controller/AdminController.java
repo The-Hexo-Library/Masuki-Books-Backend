@@ -7,6 +7,7 @@ import com.masukibooks.dto.response.OrderResponse;
 import com.masukibooks.dto.response.ProductResponse;
 import com.masukibooks.entity.DiscountCode;
 import com.masukibooks.entity.Inventory;
+import com.masukibooks.entity.Product;
 import com.masukibooks.entity.Refund;
 import com.masukibooks.entity.Review;
 import com.masukibooks.service.*;
@@ -17,6 +18,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,7 @@ public class AdminController {
     private final DiscountService discountService;
     private final RefundService refundService;
     private final ShipmentService shipmentService;
+    private final DigitalBookProcessingService digitalBookProcessingService;
 
     // ---- Orders ----
 
@@ -154,5 +157,17 @@ public class AdminController {
             @PathVariable UUID shipmentId, @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(ApiResponse.success("Shipment status updated",
                 shipmentService.updateStatus(shipmentId, body.get("status"))));
+    }
+
+    // ---- Digital Book Content ----
+
+    @PostMapping("/books/{productId}/upload-content")
+    public ResponseEntity<ApiResponse<ProductResponse>> uploadDigitalContent(
+            @PathVariable UUID productId,
+            @RequestParam("file") MultipartFile file) {
+        Product product = digitalBookProcessingService.uploadAndProcessContent(productId, file);
+        ProductResponse response = productService.getProduct(product.getProductId());
+        return ResponseEntity.ok(ApiResponse.success(
+                "Digital content uploaded and processed (" + product.getTotalPages() + " pages)", response));
     }
 }

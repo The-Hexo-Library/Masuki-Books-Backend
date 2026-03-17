@@ -7,8 +7,7 @@ import java.util.UUID;
 
 @Data
 public class CheckoutRequest {
-    @NotNull
-    private UUID shippingAddressId;
+    private UUID shippingAddressId;  // nullable for digital orders
 
     private UUID billingAddressId;  // null = same as shipping
 

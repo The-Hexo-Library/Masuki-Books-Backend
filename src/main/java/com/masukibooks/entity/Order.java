@@ -35,6 +35,10 @@ public class Order {
     private String status = "pending";
     // pending, confirmed, packed, shipped, delivered, cancelled, refunded
 
+    @Builder.Default
+    @Column(name = "order_type", length = 20)
+    private String orderType = "physical";  // physical, digital, mixed
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
