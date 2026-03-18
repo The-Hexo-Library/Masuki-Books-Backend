@@ -25,6 +25,7 @@ public class ProductService {
     private final ReviewRepository reviewRepository;
     private final ProductImageRepository productImageRepository;
 
+    @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(String keyword, UUID categoryId,
                                                 String language, BigDecimal minPrice,
                                                 BigDecimal maxPrice, Pageable pageable) {
@@ -32,6 +33,7 @@ public class ProductService {
                 minPrice, maxPrice, pageable).map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public ProductResponse getProduct(UUID productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
@@ -142,8 +144,21 @@ public class ProductService {
                 ? p.getImages().stream().map(ProductImage::getUrl).collect(Collectors.toList())
                 : List.of();
 
+        String catId = null;
+        String catName = null;
+        try {
+            if (p.getCategory() != null) {
+                catId = p.getCategory().getCategoryId().toString();
+                catName = p.getCategory().getName();
+            }
+        } catch (Exception ignored) {
+            // Lazy loading may fail with native queries
+        }
+
         return ProductResponse.builder()
                 .productId(p.getProductId())
+                .categoryId(catId)
+                .categoryName(catName)
                 .isbn(p.getIsbn())
                 .title(p.getTitle())
                 .description(p.getDescription())
@@ -164,6 +179,7 @@ public class ProductService {
                 .totalPages(p.getTotalPages())
                 .previewPages(p.getPreviewPages())
                 .downloadable(Boolean.TRUE.equals(p.getDownloadable()))
+                .createdAt(p.getCreatedAt())
                 .build();
     }
 }

@@ -18,7 +18,12 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public List<Category> getRootCategories() {
-        return categoryRepository.findByParentCategoryIsNullAndIsActiveTrue();
+        List<Category> roots = categoryRepository.findByParentCategoryIsNull();
+        // Fallback: if no root categories found, return all categories
+        if (roots.isEmpty()) {
+            return categoryRepository.findAll();
+        }
+        return roots;
     }
 
     public List<Category> getChildCategories(UUID parentId) {

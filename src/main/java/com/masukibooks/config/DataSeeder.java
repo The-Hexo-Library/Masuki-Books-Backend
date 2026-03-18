@@ -59,10 +59,6 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedDefaultCategories() {
-        if (categoryRepository.count() > 0) {
-            return;
-        }
-
         String[][] cats = {
                 {"Fiction",           "fiction",           "Novels, short stories, and literary works"},
                 {"Non-Fiction",       "non-fiction",       "Biographies, essays, and factual writing"},
@@ -78,16 +74,25 @@ public class DataSeeder implements CommandLineRunner {
 
         int order = 1;
         for (String[] c : cats) {
-            Category cat = Category.builder()
-                    .name(c[0])
-                    .slug(c[1])
-                    .description(c[2])
-                    .displayOrder(order++)
-                    .isActive(true)
-                    .build();
-            categoryRepository.save(cat);
+            Category existing = categoryRepository.findBySlug(c[1]).orElse(null);
+            if (existing != null) {
+                // Fix any null isActive or displayOrder from previous buggy seeds
+                if (existing.getIsActive() == null) existing.setIsActive(true);
+                if (existing.getDisplayOrder() == null) existing.setDisplayOrder(order);
+                categoryRepository.save(existing);
+            } else {
+                Category cat = Category.builder()
+                        .name(c[0])
+                        .slug(c[1])
+                        .description(c[2])
+                        .displayOrder(order)
+                        .isActive(true)
+                        .build();
+                categoryRepository.save(cat);
+            }
+            order++;
         }
-        log.info("✅ Seeded {} default categories.", cats.length);
+        log.info("✅ Ensured {} default categories exist.", cats.length);
     }
 
     private void seedSampleBooks() {
