@@ -17,51 +17,52 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/resale")
+@RequestMapping("/resale")
 @RequiredArgsConstructor
 public class ResaleController {
 
-    private final ResaleService resaleService;
+        private final ResaleService resaleService;
 
-    @GetMapping("/marketplace")
-    public ResponseEntity<ApiResponse<Page<ResaleListingResponse>>> getMarketplace(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.success(
-                resaleService.getMarketplace(PageRequest.of(page, size, Sort.by("listedAt").descending()))));
-    }
+        @GetMapping("/marketplace")
+        public ResponseEntity<ApiResponse<Page<ResaleListingResponse>>> getMarketplace(
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "20") int size) {
+                return ResponseEntity.ok(ApiResponse.success(
+                                resaleService.getMarketplace(
+                                                PageRequest.of(page, size, Sort.by("listedAt").descending()))));
+        }
 
-    @GetMapping("/my-listings")
-    public ResponseEntity<ApiResponse<Page<ResaleListingResponse>>> getMyListings(
-            @AuthenticationPrincipal User user,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(ApiResponse.success(
-                resaleService.getMyListings(user.getUserId(),
-                        PageRequest.of(page, size, Sort.by("listedAt").descending()))));
-    }
+        @GetMapping("/my-listings")
+        public ResponseEntity<ApiResponse<Page<ResaleListingResponse>>> getMyListings(
+                        @AuthenticationPrincipal User user,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "20") int size) {
+                return ResponseEntity.ok(ApiResponse.success(
+                                resaleService.getMyListings(user.getUserId(),
+                                                PageRequest.of(page, size, Sort.by("listedAt").descending()))));
+        }
 
-    @PostMapping("/list")
-    public ResponseEntity<ApiResponse<ResaleListingResponse>> listForResale(
-            @AuthenticationPrincipal User user,
-            @Valid @RequestBody ResaleListRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Book listed for resale",
-                resaleService.listForResale(user.getUserId(), request)));
-    }
+        @PostMapping("/list")
+        public ResponseEntity<ApiResponse<ResaleListingResponse>> listForResale(
+                        @AuthenticationPrincipal User user,
+                        @Valid @RequestBody ResaleListRequest request) {
+                return ResponseEntity.ok(ApiResponse.success("Book listed for resale",
+                                resaleService.listForResale(user.getUserId(), request)));
+        }
 
-    @PostMapping("/{resaleId}/buy")
-    public ResponseEntity<ApiResponse<ResaleListingResponse>> buyResale(
-            @AuthenticationPrincipal User user,
-            @PathVariable UUID resaleId) {
-        return ResponseEntity.ok(ApiResponse.success("Book purchased successfully",
-                resaleService.buyResale(user.getUserId(), resaleId)));
-    }
+        @PostMapping("/{resaleId}/buy")
+        public ResponseEntity<ApiResponse<ResaleListingResponse>> buyResale(
+                        @AuthenticationPrincipal User user,
+                        @PathVariable UUID resaleId) {
+                return ResponseEntity.ok(ApiResponse.success("Book purchased successfully",
+                                resaleService.buyResale(user.getUserId(), resaleId)));
+        }
 
-    @PostMapping("/{resaleId}/cancel")
-    public ResponseEntity<ApiResponse<Void>> cancelListing(
-            @AuthenticationPrincipal User user,
-            @PathVariable UUID resaleId) {
-        resaleService.cancelListing(user.getUserId(), resaleId);
-        return ResponseEntity.ok(ApiResponse.success("Listing cancelled", null));
-    }
+        @PostMapping("/{resaleId}/cancel")
+        public ResponseEntity<ApiResponse<Void>> cancelListing(
+                        @AuthenticationPrincipal User user,
+                        @PathVariable UUID resaleId) {
+                resaleService.cancelListing(user.getUserId(), resaleId);
+                return ResponseEntity.ok(ApiResponse.success("Listing cancelled", null));
+        }
 }

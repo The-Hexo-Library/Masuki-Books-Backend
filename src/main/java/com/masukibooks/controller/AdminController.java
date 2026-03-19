@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
 public class AdminController {
@@ -134,8 +134,9 @@ public class AdminController {
 
     @PutMapping("/products/{productId}")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(@PathVariable UUID productId,
-                                                                      @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Product updated", productService.updateProduct(productId, request)));
+            @RequestBody ProductRequest request) {
+        return ResponseEntity
+                .ok(ApiResponse.success("Product updated", productService.updateProduct(productId, request)));
     }
 
     @DeleteMapping("/products/{productId}")
@@ -153,7 +154,7 @@ public class AdminController {
 
     @PostMapping("/inventory/{productId}/adjust")
     public ResponseEntity<ApiResponse<Inventory>> adjustStock(@PathVariable UUID productId,
-                                                              @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body) {
         int delta = (Integer) body.get("quantityDelta");
         String reason = (String) body.getOrDefault("reason", "Manual adjustment");
         return ResponseEntity.ok(ApiResponse.success("Stock adjusted",
@@ -169,7 +170,7 @@ public class AdminController {
 
     @PatchMapping("/reviews/{reviewId}/moderate")
     public ResponseEntity<ApiResponse<Review>> moderateReview(@PathVariable UUID reviewId,
-                                                              @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(ApiResponse.success("Review moderated",
                 reviewService.moderateReview(reviewId, body.get("status"))));
     }
@@ -177,7 +178,8 @@ public class AdminController {
     // ---- Discount Codes ----
 
     @GetMapping("/discounts")
-    public ResponseEntity<ApiResponse<Page<DiscountCode>>> listDiscounts(@PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<ApiResponse<Page<DiscountCode>>> listDiscounts(
+            @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success("Discount codes", discountService.listAll(pageable)));
     }
 
@@ -188,7 +190,7 @@ public class AdminController {
 
     @PatchMapping("/discounts/{id}/toggle")
     public ResponseEntity<ApiResponse<DiscountCode>> toggleDiscount(@PathVariable UUID id,
-                                                                    @RequestBody Map<String, Boolean> body) {
+            @RequestBody Map<String, Boolean> body) {
         return ResponseEntity.ok(ApiResponse.success("Discount code updated",
                 discountService.toggle(id, body.get("active"))));
     }
@@ -199,12 +201,13 @@ public class AdminController {
     public ResponseEntity<ApiResponse<Page<Refund>>> getRefunds(
             @RequestParam(required = false, defaultValue = "pending") String status,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success("Refunds retrieved", refundService.getRefundsByStatus(status, pageable)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Refunds retrieved", refundService.getRefundsByStatus(status, pageable)));
     }
 
     @PatchMapping("/refunds/{refundId}/process")
     public ResponseEntity<ApiResponse<Refund>> processRefund(@PathVariable UUID refundId,
-                                                             @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(ApiResponse.success("Refund processed",
                 refundService.processRefund(refundId, body.get("status"))));
     }
@@ -212,7 +215,8 @@ public class AdminController {
     // ---- Shipments ----
 
     @PostMapping("/shipments")
-    public ResponseEntity<ApiResponse<com.masukibooks.entity.Shipment>> createShipment(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<ApiResponse<com.masukibooks.entity.Shipment>> createShipment(
+            @RequestBody Map<String, Object> body) {
         UUID orderId = UUID.fromString((String) body.get("orderId"));
         String carrier = (String) body.get("carrier");
         String tracking = (String) body.get("trackingNumber");

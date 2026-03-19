@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/categories")
+@RequestMapping("/categories")
 @RequiredArgsConstructor
 public class CategoryController {
 
@@ -29,7 +29,8 @@ public class CategoryController {
 
     @GetMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<CategoryResponse>> getCategory(@PathVariable UUID categoryId) {
-        return ResponseEntity.ok(ApiResponse.success("Category retrieved", toResponse(categoryService.getCategory(categoryId))));
+        return ResponseEntity
+                .ok(ApiResponse.success("Category retrieved", toResponse(categoryService.getCategory(categoryId))));
     }
 
     @GetMapping("/{categoryId}/children")
@@ -43,14 +44,16 @@ public class CategoryController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<CategoryResponse>> createCategory(@RequestBody Category category) {
-        return ResponseEntity.ok(ApiResponse.success("Category created", toResponse(categoryService.createCategory(category))));
+        return ResponseEntity
+                .ok(ApiResponse.success("Category created", toResponse(categoryService.createCategory(category))));
     }
 
     @PutMapping("/{categoryId}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<CategoryResponse>> updateCategory(@PathVariable UUID categoryId,
-                                                                @RequestBody Category updates) {
-        return ResponseEntity.ok(ApiResponse.success("Category updated", toResponse(categoryService.updateCategory(categoryId, updates))));
+            @RequestBody Category updates) {
+        return ResponseEntity.ok(ApiResponse.success("Category updated",
+                toResponse(categoryService.updateCategory(categoryId, updates))));
     }
 
     @DeleteMapping("/{categoryId}")

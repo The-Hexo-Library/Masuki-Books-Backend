@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/products")
+@RequestMapping("/products")
 @RequiredArgsConstructor
 public class ProductController {
 
@@ -31,7 +31,8 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<ProductResponse> results = productService.searchProducts(keyword, categoryId, language, minPrice, maxPrice, pageable);
+        Page<ProductResponse> results = productService.searchProducts(keyword, categoryId, language, minPrice, maxPrice,
+                pageable);
         return ResponseEntity.ok(ApiResponse.success("Products retrieved", results));
     }
 
@@ -49,8 +50,9 @@ public class ProductController {
     @PutMapping("/{productId}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(@PathVariable UUID productId,
-                                                                      @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Product updated", productService.updateProduct(productId, request)));
+            @RequestBody ProductRequest request) {
+        return ResponseEntity
+                .ok(ApiResponse.success("Product updated", productService.updateProduct(productId, request)));
     }
 
     @DeleteMapping("/{productId}")

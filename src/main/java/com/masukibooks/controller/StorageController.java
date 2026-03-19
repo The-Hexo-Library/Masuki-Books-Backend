@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/storage")
+@RequestMapping("/storage")
 @RequiredArgsConstructor
 public class StorageController {
 
@@ -41,8 +41,7 @@ public class StorageController {
                 "imageId", image.getImageId(),
                 "url", url,
                 "isPrimary", image.getIsPrimary(),
-                "displayOrder", image.getDisplayOrder()
-        );
+                "displayOrder", image.getDisplayOrder());
         return ResponseEntity.ok(ApiResponse.success("Image uploaded", result));
     }
 

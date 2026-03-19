@@ -16,7 +16,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/downloads")
+@RequestMapping("/downloads")
 @RequiredArgsConstructor
 public class DownloadController {
 

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/library")
+@RequestMapping("/library")
 @RequiredArgsConstructor
 public class LibraryController {
 
@@ -48,7 +48,8 @@ public class LibraryController {
             @RequestBody(required = false) Map<String, String> body,
             @AuthenticationPrincipal User user) {
         String accessType = (body != null && body.containsKey("accessType"))
-                ? body.get("accessType") : "sample";
+                ? body.get("accessType")
+                : "sample";
         LibraryResponse record = userLibraryService.addToLibrary(
                 user.getUserId(), bookId, accessType, null);
         return ResponseEntity.ok(ApiResponse.success("Book added to library", record));
