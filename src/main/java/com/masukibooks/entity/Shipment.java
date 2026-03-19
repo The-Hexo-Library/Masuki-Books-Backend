@@ -11,7 +11,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "shipments")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Shipment {
 
     @Id
@@ -30,7 +34,7 @@ public class Shipment {
     private String carrier;
 
     @Column(nullable = false, length = 20)
-    private String status = "pending";
+    private String status;
     // pending, dispatched, in_transit, delivered, failed
 
     @Column(name = "estimated_delivery")

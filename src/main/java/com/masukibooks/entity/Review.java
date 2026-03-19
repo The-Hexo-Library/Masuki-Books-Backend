@@ -9,10 +9,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "reviews",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "product_id", "order_id"}),
-       indexes = @Index(name = "idx_reviews_product", columnList = "product_id"))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "reviews", uniqueConstraints = @UniqueConstraint(columnNames = { "user_id", "product_id",
+        "order_id" }), indexes = @Index(name = "idx_reviews_product", columnList = "product_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Review {
 
     @Id
@@ -33,7 +36,7 @@ public class Review {
     private Order order;
 
     @Column(nullable = false)
-    private Short rating;  // 1-5
+    private Short rating; // 1-5
 
     @Column(length = 255)
     private String title;
@@ -42,7 +45,7 @@ public class Review {
     private String body;
 
     @Column(nullable = false, length = 20)
-    private String status = "pending";  // pending, approved, rejected
+    private String status; // pending, approved, rejected
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "moderated_by")

@@ -12,9 +12,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "products",
-       indexes = @Index(name = "idx_products_category", columnList = "category_id"))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "products", indexes = @Index(name = "idx_products_category", columnList = "category_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Product {
 
     @Id
@@ -49,7 +52,7 @@ public class Product {
     private String language = "en";
 
     @Column(nullable = false, length = 20)
-    private String format;  // paperback, hardcover, ebook, audiobook
+    private String format; // paperback, hardcover, ebook, audiobook
 
     private Integer pages;
 
@@ -63,7 +66,7 @@ public class Product {
     private BigDecimal compareAtPrice;
 
     @Column(nullable = false, length = 20)
-    private String status = "draft";  // active, inactive, draft
+    private String status; // active, inactive, draft
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
@@ -72,31 +75,31 @@ public class Product {
     // Digital content fields
     @Builder.Default
     @Column(name = "content_type", length = 20)
-    private String contentType = "physical";  // physical, digital, both
+    private String contentType = "physical"; // physical, digital, both
 
     @Column(name = "file_key", length = 500)
-    private String fileKey;  // S3 key for the digital file (PDF/EPUB)
+    private String fileKey; // S3 key for the digital file (PDF/EPUB)
 
     @Column(name = "file_format", length = 20)
-    private String fileFormat;  // pdf, epub
+    private String fileFormat; // pdf, epub
 
     @Column(name = "file_size_bytes")
     private Long fileSizeBytes;
 
     @Column(name = "total_pages")
-    private Integer totalPages;  // for digital reader pagination
+    private Integer totalPages; // for digital reader pagination
 
     @Builder.Default
     @Column(name = "preview_pages")
-    private Integer previewPages = 10;  // number of free preview pages
+    private Integer previewPages = 10; // number of free preview pages
 
     @Builder.Default
     @Column(name = "downloadable")
-    private Boolean downloadable = false;  // whether offline download is allowed
+    private Boolean downloadable = false; // whether offline download is allowed
 
     @Builder.Default
     @Column(name = "max_downloads")
-    private Integer maxDownloads = 3;  // per-purchase download limit
+    private Integer maxDownloads = 3; // per-purchase download limit
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

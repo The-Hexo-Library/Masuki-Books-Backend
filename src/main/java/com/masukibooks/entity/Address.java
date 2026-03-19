@@ -10,7 +10,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "addresses")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Address {
 
     @Id
@@ -53,7 +57,7 @@ public class Address {
     private String email;
 
     @Column(name = "is_default", nullable = false)
-    private Boolean isDefault = false;
+    private Boolean isDefault;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

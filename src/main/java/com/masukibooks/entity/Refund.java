@@ -11,7 +11,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "refunds")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Refund {
 
     @Id
@@ -34,7 +38,7 @@ public class Refund {
     private String reason;
 
     @Column(nullable = false, length = 20)
-    private String status = "requested";  // requested, approved, processed, rejected
+    private String status; // requested, approved, processed, rejected
 
     @Column(name = "gateway_refund_id", length = 255)
     private String gatewayRefundId;

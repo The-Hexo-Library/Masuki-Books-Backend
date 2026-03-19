@@ -2,7 +2,6 @@ package com.masukibooks.service;
 
 import com.masukibooks.entity.Inventory;
 import com.masukibooks.entity.InventoryLog;
-import com.masukibooks.entity.Product;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.InventoryLogRepository;
@@ -21,6 +20,7 @@ public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final InventoryLogRepository inventoryLogRepository;
+    @SuppressWarnings("unused")
     private final ProductRepository productRepository;
 
     public Inventory getByProduct(UUID productId) {

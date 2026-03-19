@@ -24,10 +24,13 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
+
+    @SuppressWarnings("unused")
     private final CartItemRepository cartItemRepository;
     private final InventoryRepository inventoryRepository;
     private final AddressRepository addressRepository;
     private final DiscountCodeRepository discountCodeRepository;
+    @SuppressWarnings("unused")
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
 
@@ -228,7 +231,8 @@ public class OrderService {
                         .orderItemId(i.getOrderItemId())
                         .productId(i.getProduct().getProductId())
                         .productTitle(i.getProductTitle() != null
-                                ? i.getProductTitle() : i.getProduct().getTitle())
+                                ? i.getProductTitle()
+                                : i.getProduct().getTitle())
                         .quantity(i.getQuantity())
                         .unitPrice(i.getUnitPrice())
                         .totalPrice(i.getTotalPrice())

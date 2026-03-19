@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+
 import java.util.UUID;
 
 @Service
@@ -30,7 +30,8 @@ public class UserLibraryService {
         Page<UserLibrary> records;
 
         if (status != null && accessType != null) {
-            records = userLibraryRepository.findByUserUserIdAndStatusAndAccessType(userId, status, accessType, pageable);
+            records = userLibraryRepository.findByUserUserIdAndStatusAndAccessType(userId, status, accessType,
+                    pageable);
         } else if (status != null) {
             records = userLibraryRepository.findByUserUserIdAndStatus(userId, status, pageable);
         } else if (accessType != null) {
@@ -121,10 +122,10 @@ public class UserLibraryService {
 
         String coverImageUrl = product.getImages() != null && !product.getImages().isEmpty()
                 ? product.getImages().stream()
-                    .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-                    .map(ProductImage::getUrl)
-                    .findFirst()
-                    .orElse(product.getImages().get(0).getUrl())
+                        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                        .map(ProductImage::getUrl)
+                        .findFirst()
+                        .orElse(product.getImages().get(0).getUrl())
                 : null;
 
         var progress = readingProgressRepository
@@ -155,10 +156,10 @@ public class UserLibraryService {
 
         String coverImageUrl = product.getImages() != null && !product.getImages().isEmpty()
                 ? product.getImages().stream()
-                    .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-                    .map(ProductImage::getUrl)
-                    .findFirst()
-                    .orElse(product.getImages().get(0).getUrl())
+                        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+                        .map(ProductImage::getUrl)
+                        .findFirst()
+                        .orElse(product.getImages().get(0).getUrl())
                 : null;
 
         return RecentReadResponse.builder()
