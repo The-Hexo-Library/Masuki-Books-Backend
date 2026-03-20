@@ -1,0 +1,9 @@
+{
+  "shippingAddressId": null,
+  "billingAddressId": null,
+  "paymentMethod": "card",
+  "gateway": "razorpay",
+  "discountCode": "WELCOME10",
+  "guestEmail": "john.reader@example.com",
+  "currency": "INR"
+}

@@ -1,0 +1,8 @@
+{
+  "orderNumber": "ORD-20260320-1001",
+  "gatewayTransactionId": "txn_abc123",
+  "gatewayPaymentId": "pay_xyz456",
+  "amount": 499.0,
+  "status": "success",
+  "failureReason": null
+}
