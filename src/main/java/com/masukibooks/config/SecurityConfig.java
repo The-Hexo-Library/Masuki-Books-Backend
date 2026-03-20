@@ -35,42 +35,40 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/storage/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
-                .requestMatchers("/actuator/health").permitAll()
-                // Cart — accessible with guest token
-                .requestMatchers("/api/v1/cart/**").permitAll()
-                // Download file — public (token-validated server-side)
-                .requestMatchers(HttpMethod.GET, "/api/v1/downloads/file/**").permitAll()
-                // Reader metadata — allow authenticated (access check in service layer)
-                .requestMatchers("/api/v1/reader/**").authenticated()
-                // Library — require ROLE_USER
-                .requestMatchers("/api/v1/library/**").authenticated()
-                // Wallet — require authentication
-                .requestMatchers("/api/v1/wallet/**").authenticated()
-                // Resale marketplace — public browse, auth for actions
-                .requestMatchers(HttpMethod.GET, "/api/v1/resale/marketplace").permitAll()
-                .requestMatchers("/api/v1/resale/**").authenticated()
-                // Support tickets — require authentication
-                .requestMatchers("/api/v1/support-tickets/**").authenticated()
-                // Download token generation — require authentication
-                .requestMatchers(HttpMethod.POST, "/api/v1/downloads/*/token").authenticated()
-                // Admin endpoints
-                .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "MODERATOR")
-                // All others require auth
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/storage/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
+                        // Cart — accessible with guest token
+                        .requestMatchers("/api/v1/cart/**").permitAll()
+                        // Download file — public (token-validated server-side)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/downloads/file/**").permitAll()
+                        // Reader metadata — allow authenticated (access check in service layer)
+                        .requestMatchers("/api/v1/reader/**").authenticated()
+                        // Library — require ROLE_USER
+                        .requestMatchers("/api/v1/library/**").authenticated()
+                        // Wallet — require authentication
+                        .requestMatchers("/api/v1/wallet/**").authenticated()
+                        // Resale marketplace — public browse, auth for actions
+                        .requestMatchers(HttpMethod.GET, "/api/v1/resale/marketplace").permitAll()
+                        .requestMatchers("/api/v1/resale/**").authenticated()
+                        // Support tickets — require authentication
+                        .requestMatchers("/api/v1/support-tickets/**").authenticated()
+                        // Download token generation — require authentication
+                        .requestMatchers(HttpMethod.POST, "/api/v1/downloads/*/token").authenticated()
+                        // Admin endpoints
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "MODERATOR")
+                        // All others require auth
+                        .anyRequest().authenticated())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
