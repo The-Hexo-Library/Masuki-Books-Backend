@@ -11,7 +11,7 @@ spring:
   datasource:
     # Supabase connection string format:
     # jdbc:postgresql://db.[your-project-ref].supabase.co:5432/postgres
-    url: https://bbrxdsaojiqdgrdyghih.supabase.co
+    url: ${DATABASE_URL:jdbc:postgresql://db.bbrxdsaojiqdgrdyghih.supabase.co:5432/postgres?sslmode=require}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
     hikari:
