@@ -120,13 +120,14 @@ public class UserLibraryService {
     private LibraryResponse toLibraryResponse(UserLibrary record) {
         Product product = record.getProduct();
 
-        String coverImageUrl = product.getImages() != null && !product.getImages().isEmpty()
-                ? product.getImages().stream()
-                        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-                        .map(ProductImage::getUrl)
-                        .findFirst()
-                        .orElse(product.getImages().get(0).getUrl())
-                : null;
+        // String coverImageUrl = product.getImages() != null &&
+        // !product.getImages().isEmpty()
+        // ? product.getImages().stream()
+        // .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+        // .map(ProductImage::getUrl)
+        // .findFirst()
+        // .orElse(product.getImages().get(0).getUrl())
+        // : null;
 
         var progress = readingProgressRepository
                 .findByUserUserIdAndProductProductId(
@@ -138,7 +139,7 @@ public class UserLibraryService {
                 .productId(product.getProductId())
                 .title(product.getTitle())
                 .author(product.getAuthor())
-                .coverImageUrl(coverImageUrl)
+                // .coverImageUrl(coverImageUrl)
                 .fileFormat(product.getFileFormat())
                 .accessType(record.getAccessType())
                 .acquiredAt(record.getAcquiredAt())
@@ -154,19 +155,20 @@ public class UserLibraryService {
     private RecentReadResponse toRecentReadResponse(ReadingProgress rp) {
         Product product = rp.getProduct();
 
-        String coverImageUrl = product.getImages() != null && !product.getImages().isEmpty()
-                ? product.getImages().stream()
-                        .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-                        .map(ProductImage::getUrl)
-                        .findFirst()
-                        .orElse(product.getImages().get(0).getUrl())
-                : null;
+        // String coverImageUrl = product.getImages() != null &&
+        // !product.getImages().isEmpty()
+        // ? product.getImages().stream()
+        // .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+        // .map(ProductImage::getUrl)
+        // .findFirst()
+        // .orElse(product.getImages().get(0).getUrl())
+        // : null;
 
         return RecentReadResponse.builder()
                 .productId(product.getProductId())
                 .title(product.getTitle())
                 .author(product.getAuthor())
-                .coverImageUrl(coverImageUrl)
+                // .coverImageUrl(coverImageUrl)
                 .fileFormat(product.getFileFormat())
                 .lastReadAt(rp.getLastReadAt())
                 .currentPage(rp.getCurrentPage())

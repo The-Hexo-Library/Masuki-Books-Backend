@@ -12,7 +12,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "categories")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Category {
 
     @Id
@@ -20,14 +24,14 @@ public class Category {
     @Column(name = "category_id")
     private UUID categoryId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_category_id")
-    @JsonIgnore
-    private Category parentCategory;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "parent_category_id")
+    // @JsonIgnore
+    // private Category parentCategory;
 
-    @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Category> subCategories;
+    // @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY)
+    // @JsonIgnore
+    // private List<Category> subCategories;
 
     @Column(nullable = false, length = 150)
     private String name;
@@ -38,8 +42,8 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "image_url", length = 500)
-    private String imageUrl;
+    // @Column(name = "image_url", length = 500)
+    // private String imageUrl;
 
     @Builder.Default
     @Column(name = "display_order", nullable = false)

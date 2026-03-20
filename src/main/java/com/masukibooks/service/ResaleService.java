@@ -106,7 +106,8 @@ public class ResaleService {
                 .build();
 
         resaleRepository.save(resale);
-        log.info("Book listed for resale: resaleId={}, productId={}", resale.getResaleId(), lib.getProduct().getProductId());
+        log.info("Book listed for resale: resaleId={}, productId={}", resale.getResaleId(),
+                lib.getProduct().getProductId());
         return mapResale(resale);
     }
 
@@ -185,8 +186,8 @@ public class ResaleService {
 
     private ResaleListingResponse mapResale(BookResale r) {
         Product p = r.getProduct();
-        String coverUrl = (p.getImages() != null && !p.getImages().isEmpty())
-                ? p.getImages().get(0).getUrl() : null;
+        // String coverUrl = (p.getImages() != null && !p.getImages().isEmpty())
+        // ? p.getImages().get(0).getUrl() : null;
 
         return ResaleListingResponse.builder()
                 .resaleId(r.getResaleId().toString())
@@ -195,7 +196,7 @@ public class ResaleService {
                 .productId(p.getProductId().toString())
                 .title(p.getTitle())
                 .author(p.getAuthor())
-                .coverImageUrl(coverUrl)
+                // .coverImageUrl(coverUrl)
                 .originalPrice(r.getOriginalPrice())
                 .listingPrice(r.getListingPrice())
                 .readingTimeSeconds(r.getReadingTimeSeconds())

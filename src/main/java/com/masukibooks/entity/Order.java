@@ -52,11 +52,11 @@ public class Order {
     @Column(name = "discount_amount", precision = 10, scale = 2)
     private BigDecimal discountAmount;
 
-    @Column(name = "tax_amount", precision = 10, scale = 2)
-    private BigDecimal taxAmount;
+    // @Column(name = "tax_amount", precision = 10, scale = 2)
+    // private BigDecimal taxAmount;
 
-    @Column(name = "shipping_amount", precision = 10, scale = 2)
-    private BigDecimal shippingAmount;
+    // @Column(name = "shipping_amount", precision = 10, scale = 2)
+    // private BigDecimal shippingAmount;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -64,13 +64,13 @@ public class Order {
     @Column(nullable = false, length = 10)
     private String currency;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipping_address_id")
-    private Address shippingAddress;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "shipping_address_id")
+    // private Address shippingAddress;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "billing_address_id")
-    private Address billingAddress;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "billing_address_id")
+    // private Address billingAddress;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -89,6 +89,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Shipment> shipments;
+    // @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch =
+    // FetchType.LAZY)
+    // private List<Shipment> shipments;
 }

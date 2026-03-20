@@ -28,7 +28,7 @@ public class OrderService {
     @SuppressWarnings("unused")
     private final CartItemRepository cartItemRepository;
     private final InventoryRepository inventoryRepository;
-    private final AddressRepository addressRepository;
+    // private final AddressRepository addressRepository;
     private final DiscountCodeRepository discountCodeRepository;
     @SuppressWarnings("unused")
     private final ProductRepository productRepository;
@@ -104,28 +104,30 @@ public class OrderService {
         BigDecimal total = subtotal.subtract(discountAmount);
 
         // Address handling: required for physical/mixed, optional for digital
-        Address shippingAddress = null;
-        Address billingAddress = null;
+        // Address shippingAddress = null;
+        // Address billingAddress = null;
 
-        if (!"digital".equals(orderType)) {
-            if (request.getShippingAddressId() == null) {
-                throw new BusinessException("Shipping address is required for physical orders");
-            }
-            shippingAddress = addressRepository.findById(request.getShippingAddressId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Shipping address not found"));
-            billingAddress = request.getBillingAddressId() != null
-                    ? addressRepository.findById(request.getBillingAddressId())
-                            .orElseThrow(() -> new ResourceNotFoundException("Billing address not found"))
-                    : shippingAddress;
-        } else if (request.getShippingAddressId() != null) {
-            // Allow optional address for digital orders too
-            shippingAddress = addressRepository.findById(request.getShippingAddressId()).orElse(null);
-            billingAddress = request.getBillingAddressId() != null
-                    ? addressRepository.findById(request.getBillingAddressId()).orElse(null)
-                    : shippingAddress;
-        }
-
-        BigDecimal shippingAmount = "digital".equals(orderType) ? BigDecimal.ZERO : BigDecimal.ZERO;
+        // if (!"digital".equals(orderType)) {
+        // if (request.getShippingAddressId() == null) {
+        // throw new BusinessException("Shipping address is required for physical
+        // orders");
+        // }
+        // shippingAddress = addressRepository.findById(request.getShippingAddressId())
+        // .orElseThrow(() -> new ResourceNotFoundException("Shipping address not
+        // found"));
+        // billingAddress = request.getBillingAddressId() != null
+        // ? addressRepository.findById(request.getBillingAddressId())
+        // .orElseThrow(() -> new ResourceNotFoundException("Billing address not
+        // found"))
+        // : shippingAddress;
+        // } else if (request.getShippingAddressId() != null) {
+        // // Allow optional address for digital orders too
+        // shippingAddress =
+        // addressRepository.findById(request.getShippingAddressId()).orElse(null);
+        // billingAddress = request.getBillingAddressId() != null
+        // ? addressRepository.findById(request.getBillingAddressId()).orElse(null)
+        // : shippingAddress;
+        // }
 
         String orderNumber = "ORD-" + System.currentTimeMillis();
 
@@ -134,11 +136,11 @@ public class OrderService {
                 .guestEmail(request.getGuestEmail())
                 .orderNumber(orderNumber)
                 .orderType(orderType)
-                .shippingAddress(shippingAddress)
-                .billingAddress(billingAddress)
+                // .shippingAddress(shippingAddress)
+                // .billingAddress(billingAddress)
                 .subtotal(subtotal)
                 .discountAmount(discountAmount)
-                .shippingAmount(shippingAmount)
+                // .shippingAmount(shippingAmount)
                 .totalAmount(total)
                 .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
                 .status("pending")
@@ -238,15 +240,16 @@ public class OrderService {
                         .totalPrice(i.getTotalPrice())
                         .build()).collect(Collectors.toList());
 
-        OrderResponse.AddressResponse shipping = o.getShippingAddress() == null ? null
-                : OrderResponse.AddressResponse.builder()
-                        .addressId(o.getShippingAddress().getAddressId())
-                        .addressLine1(o.getShippingAddress().getAddressLine1())
-                        .city(o.getShippingAddress().getCity())
-                        .state(o.getShippingAddress().getState())
-                        .zipCode(o.getShippingAddress().getZipCode())
-                        .country(o.getShippingAddress().getCountry())
-                        .build();
+        // OrderResponse.AddressResponse shipping = o.getShippingAddress() == null ?
+        // null
+        // : OrderResponse.AddressResponse.builder()
+        // .addressId(o.getShippingAddress().getAddressId())
+        // .addressLine1(o.getShippingAddress().getAddressLine1())
+        // .city(o.getShippingAddress().getCity())
+        // .state(o.getShippingAddress().getState())
+        // .zipCode(o.getShippingAddress().getZipCode())
+        // .country(o.getShippingAddress().getCountry())
+        // .build();
 
         return OrderResponse.builder()
                 .orderId(o.getOrderId())
@@ -258,7 +261,7 @@ public class OrderService {
                 .totalAmount(o.getTotalAmount())
                 .currency(o.getCurrency())
                 .guestEmail(o.getGuestEmail())
-                .shippingAddress(shipping)
+                // .shippingAddress(shipping)
                 .items(itemResponses)
                 .createdAt(o.getCreatedAt())
                 .build();

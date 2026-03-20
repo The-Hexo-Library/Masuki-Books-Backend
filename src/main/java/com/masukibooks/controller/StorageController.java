@@ -1,8 +1,8 @@
 package com.masukibooks.controller;
 
 import com.masukibooks.dto.response.ApiResponse;
-import com.masukibooks.entity.ProductImage;
-import com.masukibooks.service.ProductService;
+// import com.masukibooks.entity.ProductImage;
+// import com.masukibooks.service.ProductService;
 import com.masukibooks.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+// import java.util.UUID;
 
 @RestController
 @RequestMapping("/storage")
@@ -21,29 +21,32 @@ import java.util.UUID;
 public class StorageController {
 
     private final StorageService storageService;
-    private final ProductService productService;
+    // private final ProductService productService;
 
     /**
      * Upload a book cover image and link it to a product.
+     * //
      */
-    @PostMapping(value = "/products/{productId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadProductImage(
-            @PathVariable UUID productId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "isPrimary", defaultValue = "false") boolean isPrimary,
-            @RequestParam(value = "sortOrder", defaultValue = "0") int sortOrder) {
+    // @PostMapping(value = "/products/{productId}/images", consumes =
+    // MediaType.MULTIPART_FORM_DATA_VALUE)
+    // @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    // public ResponseEntity<ApiResponse<Map<String, Object>>> uploadProductImage(
+    // @PathVariable UUID productId,
+    // @RequestParam("file") MultipartFile file,
+    // @RequestParam(value = "isPrimary", defaultValue = "false") boolean isPrimary,
+    // @RequestParam(value = "sortOrder", defaultValue = "0") int sortOrder) {
 
-        String url = storageService.uploadFile(file, "covers/" + productId);
-        ProductImage image = productService.addProductImage(productId, url, isPrimary, sortOrder);
+    // String url = storageService.uploadFile(file, "covers/" + productId);
+    // // ProductImage image = productService.addProductImage(productId, url,
+    // isPrimary, sortOrder);
 
-        Map<String, Object> result = Map.of(
-                "imageId", image.getImageId(),
-                "url", url,
-                "isPrimary", image.getIsPrimary(),
-                "displayOrder", image.getDisplayOrder());
-        return ResponseEntity.ok(ApiResponse.success("Image uploaded", result));
-    }
+    // Map<String, Object> result = Map.of(
+    // "imageId", image.getImageId(),
+    // "url", url,
+    // "isPrimary", image.getIsPrimary(),
+    // "displayOrder", image.getDisplayOrder());
+    // return ResponseEntity.ok(ApiResponse.success("Image uploaded", result));
+    // }
 
     /**
      * Upload a general file to a specified folder (e.g., ebooks, audiobooks).

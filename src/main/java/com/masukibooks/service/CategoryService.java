@@ -35,22 +35,27 @@ public class CategoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
     }
 
-    @Transactional
-    public Category createCategory(Category category) {
-        if (category.getParentCategory() != null && category.getParentCategory().getCategoryId() != null) {
-            Category parent = getCategory(category.getParentCategory().getCategoryId());
-            category.setParentCategory(parent);
-        }
-        return categoryRepository.save(category);
-    }
+    // @Transactional
+    // public Category createCategory(Category category) {
+    // if (category.getParentCategory() != null &&
+    // category.getParentCategory().getCategoryId() != null) {
+    // Category parent = getCategory(category.getParentCategory().getCategoryId());
+    // category.setParentCategory(parent);
+    // }
+    // return categoryRepository.save(category);
+    // }
 
     @Transactional
     public Category updateCategory(UUID categoryId, Category updates) {
         Category category = getCategory(categoryId);
-        if (updates.getName() != null) category.setName(updates.getName());
-        if (updates.getSlug() != null) category.setSlug(updates.getSlug());
-        if (updates.getDescription() != null) category.setDescription(updates.getDescription());
-        if (updates.getImageUrl() != null) category.setImageUrl(updates.getImageUrl());
+        if (updates.getName() != null)
+            category.setName(updates.getName());
+        if (updates.getSlug() != null)
+            category.setSlug(updates.getSlug());
+        if (updates.getDescription() != null)
+            category.setDescription(updates.getDescription());
+        // if (updates.getImageUrl() != null)
+        // category.setImageUrl(updates.getImageUrl());
         return categoryRepository.save(category);
     }
 

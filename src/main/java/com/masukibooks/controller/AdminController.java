@@ -34,7 +34,7 @@ public class AdminController {
     private final InventoryService inventoryService;
     private final DiscountService discountService;
     private final RefundService refundService;
-    private final ShipmentService shipmentService;
+    // private final ShipmentService shipmentService;
     private final DigitalBookProcessingService digitalBookProcessingService;
     private final DashboardService dashboardService;
     private final SupportTicketService supportTicketService;
@@ -214,23 +214,26 @@ public class AdminController {
 
     // ---- Shipments ----
 
-    @PostMapping("/shipments")
-    public ResponseEntity<ApiResponse<com.masukibooks.entity.Shipment>> createShipment(
-            @RequestBody Map<String, Object> body) {
-        UUID orderId = UUID.fromString((String) body.get("orderId"));
-        String carrier = (String) body.get("carrier");
-        String tracking = (String) body.get("trackingNumber");
-        String serviceLevel = (String) body.getOrDefault("serviceLevel", "standard");
-        return ResponseEntity.ok(ApiResponse.success("Shipment created",
-                shipmentService.createShipment(orderId, carrier, tracking, serviceLevel, null)));
-    }
+    // @PostMapping("/shipments")
+    // public ResponseEntity<ApiResponse<com.masukibooks.entity.Shipment>>
+    // createShipment(
+    // @RequestBody Map<String, Object> body) {
+    // UUID orderId = UUID.fromString((String) body.get("orderId"));
+    // String carrier = (String) body.get("carrier");
+    // String tracking = (String) body.get("trackingNumber");
+    // String serviceLevel = (String) body.getOrDefault("serviceLevel", "standard");
+    // return ResponseEntity.ok(ApiResponse.success("Shipment created",
+    // shipmentService.createShipment(orderId, carrier, tracking, serviceLevel,
+    // null)));
+    // }
 
-    @PatchMapping("/shipments/{shipmentId}/status")
-    public ResponseEntity<ApiResponse<com.masukibooks.entity.Shipment>> updateShipmentStatus(
-            @PathVariable UUID shipmentId, @RequestBody Map<String, String> body) {
-        return ResponseEntity.ok(ApiResponse.success("Shipment status updated",
-                shipmentService.updateStatus(shipmentId, body.get("status"))));
-    }
+    // @PatchMapping("/shipments/{shipmentId}/status")
+    // public ResponseEntity<ApiResponse<com.masukibooks.entity.Shipment>>
+    // updateShipmentStatus(
+    // @PathVariable UUID shipmentId, @RequestBody Map<String, String> body) {
+    // return ResponseEntity.ok(ApiResponse.success("Shipment status updated",
+    // shipmentService.updateStatus(shipmentId, body.get("status"))));
+    // }
 
     // ---- Digital Book Content ----
 

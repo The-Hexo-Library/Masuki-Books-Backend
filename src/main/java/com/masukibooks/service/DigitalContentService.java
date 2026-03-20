@@ -72,13 +72,13 @@ public class DigitalContentService {
                     .collect(Collectors.toList());
         }
 
-        String coverImageUrl = product.getImages() != null && !product.getImages().isEmpty()
-                ? product.getImages().stream()
-                    .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-                    .map(ProductImage::getUrl)
-                    .findFirst()
-                    .orElse(product.getImages().get(0).getUrl())
-                : null;
+        // String coverImageUrl = product.getImages() != null && !product.getImages().isEmpty()
+        //         ? product.getImages().stream()
+        //             .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
+        //             .map(ProductImage::getUrl)
+        //             .findFirst()
+        //             .orElse(product.getImages().get(0).getUrl())
+        //         : null;
 
         return BookReaderMetadata.builder()
                 .productId(product.getProductId())
@@ -87,7 +87,7 @@ public class DigitalContentService {
                 .fileFormat(product.getFileFormat())
                 .totalPages(product.getTotalPages())
                 .previewPages(product.getPreviewPages())
-                .coverImageUrl(coverImageUrl)
+                // .coverImageUrl(coverImageUrl)
                 .currentProgress(progressInfo)
                 .bookmarks(bookmarkInfos)
                 .build();

@@ -69,7 +69,7 @@ public class CategoryController {
                 .name(c.getName())
                 .slug(c.getSlug())
                 .description(c.getDescription())
-                .imageUrl(c.getImageUrl())
+                // .imageUrl(c.getImageUrl())
                 .displayOrder(c.getDisplayOrder())
                 .build();
     }
