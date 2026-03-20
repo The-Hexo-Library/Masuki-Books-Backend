@@ -35,15 +35,15 @@ public class CategoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
     }
 
-    // @Transactional
-    // public Category createCategory(Category category) {
-    // if (category.getParentCategory() != null &&
-    // category.getParentCategory().getCategoryId() != null) {
-    // Category parent = getCategory(category.getParentCategory().getCategoryId());
-    // category.setParentCategory(parent);
-    // }
-    // return categoryRepository.save(category);
-    // }
+    @Transactional
+    public Category createCategory(Category category) {
+        if (category.getParentCategory() != null &&
+                category.getParentCategory().getCategoryId() != null) {
+            Category parent = getCategory(category.getParentCategory().getCategoryId());
+            category.setParentCategory(parent);
+        }
+        return categoryRepository.save(category);
+    }
 
     @Transactional
     public Category updateCategory(UUID categoryId, Category updates) {
@@ -68,4 +68,5 @@ public class CategoryService {
         }
         categoryRepository.delete(category);
     }
+
 }

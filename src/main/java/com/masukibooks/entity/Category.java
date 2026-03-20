@@ -24,14 +24,14 @@ public class Category {
     @Column(name = "category_id")
     private UUID categoryId;
 
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "parent_category_id")
-    // @JsonIgnore
-    // private Category parentCategory;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_category_id")
+    @JsonIgnore
+    private Category parentCategory;
 
-    // @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<Category> subCategories;
+    @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Category> subCategories;
 
     @Column(nullable = false, length = 150)
     private String name;
