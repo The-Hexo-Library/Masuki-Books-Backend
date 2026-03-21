@@ -26,7 +26,7 @@ public class UserLibrary {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    private BooksMetadata product;
 
     @Column(name = "access_type", nullable = false, length = 20)
     private String accessType;  // purchased, borrowed, sample

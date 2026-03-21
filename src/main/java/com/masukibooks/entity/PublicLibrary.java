@@ -5,38 +5,41 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cart_items", uniqueConstraints = @UniqueConstraint(columnNames = { "cart_id",
-        "product_id" }), indexes = @Index(name = "idx_cart_items_cart", columnList = "cart_id"))
+@Table(name = "public_library", uniqueConstraints = @UniqueConstraint(columnNames = {"product_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CartItem {
+public class PublicLibrary {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "cart_item_id")
-    private UUID cartItemId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id", nullable = false)
-    private Cart cart;
+    @Column(name = "public_library_id")
+    private UUID publicLibraryId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private BooksMetadata product;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @Builder.Default
+    @Column(name = "is_featured", nullable = false)
+    private Boolean isFeatured = false;
 
-    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal unitPrice;
+    @Builder.Default
+    @Column(nullable = false, length = 20)
+    private String visibility = "public";
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean editable = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

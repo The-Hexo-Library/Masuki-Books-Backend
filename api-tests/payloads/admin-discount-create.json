@@ -1,9 +1,0 @@
-{
-  "code": "WELCOME10",
-  "type": "percentage",
-  "value": 10,
-  "minOrderAmount": 100,
-  "maxUses": 100,
-  "startsAt": "2026-03-20T00:00:00",
-  "expiresAt": "2026-12-31T23:59:59"
-}

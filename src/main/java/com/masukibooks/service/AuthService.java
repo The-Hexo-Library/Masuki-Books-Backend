@@ -4,10 +4,9 @@ import com.masukibooks.dto.request.LoginRequest;
 import com.masukibooks.dto.request.RegisterRequest;
 import com.masukibooks.dto.response.AuthResponse;
 import com.masukibooks.entity.User;
-import com.masukibooks.entity.AdminUser;
+import com.masukibooks.entity.UserRole;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
-import com.masukibooks.repository.AdminUserRepository;
 import com.masukibooks.repository.UserRepository;
 import com.masukibooks.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +21,8 @@ import java.time.LocalDateTime;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final AdminUserRepository adminUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-    private final WalletService walletService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -48,14 +45,12 @@ public class AuthService {
                 .piiConsent(request.isPiiConsent())
                 .piiConsentDate(request.isPiiConsent() ? LocalDateTime.now() : null)
                 .status("active")
+                .role(UserRole.USER)
                 .build();
 
         user = userRepository.save(user);
 
-        // Auto-create wallet for new user
-        walletService.getOrCreateWallet(user.getUserId());
-
-        String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), "user");
+        String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name());
         return AuthResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
@@ -63,7 +58,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .role("user")
+                .role(user.getRole().name())
                 .build();
     }
 
@@ -79,7 +74,7 @@ public class AuthService {
             throw new BusinessException("Account is " + user.getStatus());
         }
 
-        String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), "user");
+        String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), user.getRole().name());
         return AuthResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
@@ -87,30 +82,34 @@ public class AuthService {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .role("user")
+                .role(user.getRole().name())
                 .build();
     }
 
     public AuthResponse adminLogin(LoginRequest request) {
-        AdminUser admin = adminUserRepository.findByEmail(request.getIdentifier())
+        User admin = userRepository.findByEmail(request.getIdentifier())
+                .or(() -> userRepository.findByPhoneNumber(request.getIdentifier()))
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), admin.getPasswordHash())) {
             throw new BusinessException("Invalid credentials");
         }
-        if (!admin.getIsActive()) {
+        if (admin.getRole() != UserRole.ADMIN) {
+            throw new BusinessException("User is not an admin");
+        }
+        if (!"active".equals(admin.getStatus())) {
             throw new BusinessException("Admin account is inactive");
         }
 
-        String token = jwtTokenProvider.generateToken(admin.getAdminId(), admin.getEmail(), admin.getRole());
+        String token = jwtTokenProvider.generateToken(admin.getUserId(), admin.getEmail(), admin.getRole().name());
         return AuthResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
-                .userId(admin.getAdminId())
+                .userId(admin.getUserId())
                 .email(admin.getEmail())
                 .firstName(admin.getFirstName())
                 .lastName(admin.getLastName())
-                .role(admin.getRole())
+                .role(admin.getRole().name())
                 .build();
     }
 }

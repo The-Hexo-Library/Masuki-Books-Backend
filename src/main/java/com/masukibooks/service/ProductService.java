@@ -2,9 +2,11 @@ package com.masukibooks.service;
 
 import com.masukibooks.dto.request.ProductRequest;
 import com.masukibooks.dto.response.ProductResponse;
-import com.masukibooks.entity.*;
+import com.masukibooks.entity.BooksMetadata;
+import com.masukibooks.entity.Category;
 import com.masukibooks.exception.ResourceNotFoundException;
-import com.masukibooks.repository.*;
+import com.masukibooks.repository.BooksMetadataRepository;
+import com.masukibooks.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,11 +21,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductService {
 
-    private final ProductRepository productRepository;
+    private final BooksMetadataRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final InventoryRepository inventoryRepository;
-    private final ReviewRepository reviewRepository;
-    // private final ProductImageRepository productImageRepository;
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(String keyword, UUID categoryId,
@@ -35,7 +34,7 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductResponse getProduct(UUID productId) {
-        Product product = productRepository.findById(productId)
+        BooksMetadata product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         return toResponse(product);
     }
@@ -45,7 +44,7 @@ public class ProductService {
         Category category = categoryRepository.findById(UUID.fromString(request.getCategoryId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
 
-        Product product = Product.builder()
+        BooksMetadata product = BooksMetadata.builder()
                 .category(category)
                 .isbn(request.getIsbn())
                 .sku(request.getSku())
@@ -69,25 +68,12 @@ public class ProductService {
                 .maxDownloads(request.getMaxDownloads() != null ? request.getMaxDownloads() : 3)
                 .build();
 
-        product = productRepository.save(product);
-
-        // Only create inventory for physical products
-        boolean isDigital = "digital".equals(product.getContentType());
-        if (!isDigital) {
-            Inventory inventory = Inventory.builder()
-                    .product(product)
-                    .quantity(0)
-                    .lowStockThreshold(5)
-                    .build();
-            inventoryRepository.save(inventory);
-        }
-
-        return toResponse(product);
+        return toResponse(productRepository.save(product));
     }
 
     @Transactional
     public ProductResponse updateProduct(UUID productId, ProductRequest request) {
-        Product product = productRepository.findById(productId)
+        BooksMetadata product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         if (request.getCategoryId() != null) {
@@ -129,7 +115,7 @@ public class ProductService {
 
     @Transactional
     public void deleteProduct(UUID productId) {
-        Product product = productRepository.findById(productId)
+        BooksMetadata product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         product.setStatus("inactive");
         productRepository.save(product);
@@ -149,16 +135,7 @@ public class ProductService {
     // return productImageRepository.save(image);
     // }
 
-    private ProductResponse toResponse(Product p) {
-        boolean isDigital = "digital".equals(p.getContentType()) || "both".equals(p.getContentType());
-        Inventory inv = inventoryRepository.findByProductProductId(p.getProductId()).orElse(null);
-        int stock = inv != null ? inv.getQuantity() : 0;
-        Double avgRating = reviewRepository.getAverageRatingByProductId(p.getProductId());
-        // List<String> imageUrls = p.getImages() != null
-        // ?
-        // p.getImages().stream().map(ProductImage::getUrl).collect(Collectors.toList())
-        // : List.of();
-
+    private ProductResponse toResponse(BooksMetadata p) {
         String catId = null;
         String catName = null;
         try {
@@ -185,10 +162,9 @@ public class ProductService {
                 .publicationDate(p.getPublicationDate())
                 .price(p.getPrice())
                 .status(p.getStatus())
-                .stockQuantity(isDigital ? null : stock)
-                .inStock(isDigital || stock > 0)
-                .averageRating(avgRating)
-                // .imageUrls(imageUrls)
+                .stockQuantity(null)
+                .inStock(true)
+                .averageRating(null)
                 .contentType(p.getContentType())
                 .fileFormat(p.getFileFormat())
                 .totalPages(p.getTotalPages())

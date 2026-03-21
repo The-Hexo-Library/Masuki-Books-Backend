@@ -1,8 +1,6 @@
 package com.masukibooks.security;
 
-import com.masukibooks.entity.AdminUser;
 import com.masukibooks.entity.User;
-import com.masukibooks.repository.AdminUserRepository;
 import com.masukibooks.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,7 +25,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
-    private final AdminUserRepository adminUserRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,37 +33,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
         if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
             UUID userId = tokenProvider.getUserIdFromToken(token);
-            String role = tokenProvider.getRoleFromToken(token);
-
-            Object principal = null;
-            @SuppressWarnings("unused")
-            List<SimpleGrantedAuthority> authorities;
-
-            if (role != null && (role.contains("admin") || role.contains("moderator"))) {
-                Optional<AdminUser> admin = adminUserRepository.findById(userId);
-                if (admin.isPresent()) {
-                    principal = admin.get();
-                    authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
-                } else {
-                    filterChain.doFilter(request, response);
-                    return;
-                }
-            } else {
-                Optional<User> user = userRepository.findById(userId);
-                if (user.isPresent()) {
-                    principal = user.get();
-                    authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-                } else {
-                    filterChain.doFilter(request, response);
-                    return;
-                }
+            Optional<User> user = userRepository.findById(userId);
+            if (user.isEmpty()) {
+                filterChain.doFilter(request, response);
+                return;
             }
+            User principal = user.get();
+            String role = principal.getRole() != null ? principal.getRole().name() : "USER";
+            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principal,
                     null,
-                    ((List<SimpleGrantedAuthority>) (principal instanceof AdminUser
-                            ? List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
-                            : List.of(new SimpleGrantedAuthority("ROLE_USER")))));
+                    authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(request, response);
