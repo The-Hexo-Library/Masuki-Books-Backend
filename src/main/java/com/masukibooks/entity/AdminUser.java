@@ -10,7 +10,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "admin_users")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AdminUser {
 
     @Id
@@ -31,10 +35,10 @@ public class AdminUser {
     private String lastName;
 
     @Column(nullable = false, length = 20)
-    private String role;  // super_admin, admin, moderator
+    private String role; // super_admin, admin, moderator
 
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    private Boolean isActive;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;

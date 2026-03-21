@@ -11,4 +11,6 @@ public interface RefundRepository extends JpaRepository<Refund, UUID> {
     List<Refund> findByOrderOrderId(UUID orderId);
     List<Refund> findByStatus(String status);
     Page<Refund> findByStatus(String status, Pageable pageable);
+
+    long countByStatus(String status);
 }

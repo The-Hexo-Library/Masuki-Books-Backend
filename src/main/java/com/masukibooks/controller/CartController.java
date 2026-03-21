@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/cart")
+@RequestMapping("/cart")
 @RequiredArgsConstructor
 public class CartController {
 
@@ -22,13 +22,15 @@ public class CartController {
     private final JwtTokenProvider jwtTokenProvider;
 
     private UUID resolveUserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return null;
         try {
             String token = authHeader.replace("Bearer ", "");
             if (jwtTokenProvider.validateToken(token)) {
                 return jwtTokenProvider.getUserIdFromToken(token);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return null;
     }
 

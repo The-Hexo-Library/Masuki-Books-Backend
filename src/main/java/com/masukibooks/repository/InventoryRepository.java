@@ -12,4 +12,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, UUID> {
 
     @Query("SELECT i FROM Inventory i WHERE i.quantity <= i.lowStockThreshold")
     List<Inventory> findLowStockItems();
+
+    @Query("SELECT COUNT(i) FROM Inventory i WHERE i.quantity <= i.lowStockThreshold")
+    long countLowStock();
 }

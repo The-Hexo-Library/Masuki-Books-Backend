@@ -8,9 +8,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "notifications",
-       indexes = @Index(name = "idx_notifications_user", columnList = "user_id"))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "notifications", indexes = @Index(name = "idx_notifications_user", columnList = "user_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Notification {
 
     @Id
@@ -27,7 +30,7 @@ public class Notification {
     // order_confirmation, shipment_update, otp, password_reset, promo
 
     @Column(nullable = false, length = 10)
-    private String channel;  // email, sms, push
+    private String channel; // email, sms, push
 
     @Column(nullable = false, length = 255)
     private String recipient;
@@ -39,7 +42,7 @@ public class Notification {
     private String body;
 
     @Column(nullable = false, length = 10)
-    private String status = "queued";  // queued, sent, failed
+    private String status; // queued, sent, failed
 
     @Column(name = "sent_at")
     private LocalDateTime sentAt;
