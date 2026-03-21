@@ -10,9 +10,12 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "payments",
-       indexes = @Index(name = "idx_payments_order", columnList = "order_id"))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "payments", indexes = @Index(name = "idx_payments_order", columnList = "order_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Payment {
 
     @Id
@@ -25,10 +28,10 @@ public class Payment {
     private Order order;
 
     @Column(name = "payment_method", nullable = false, length = 20)
-    private String paymentMethod;  // card, upi, net_banking, wallet
+    private String paymentMethod; // card, upi, net_banking, wallet
 
     @Column(nullable = false, length = 100)
-    private String gateway;  // razorpay, stripe
+    private String gateway; // razorpay, stripe
 
     @Column(name = "gateway_transaction_id", length = 255)
     private String gatewayTransactionId;
@@ -43,7 +46,7 @@ public class Payment {
     private String currency;
 
     @Column(nullable = false, length = 20)
-    private String status = "pending";  // pending, success, failed, refunded
+    private String status; // pending, success, failed, refunded
 
     @Column(name = "failure_reason", columnDefinition = "TEXT")
     private String failureReason;

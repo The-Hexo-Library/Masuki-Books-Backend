@@ -16,4 +16,6 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
     @Query("SELECT AVG(r.rating) FROM Review r WHERE r.product.productId = :productId AND r.status = 'approved'")
     Double getAverageRatingByProductId(@Param("productId") UUID productId);
+
+    long countByStatus(String status);
 }

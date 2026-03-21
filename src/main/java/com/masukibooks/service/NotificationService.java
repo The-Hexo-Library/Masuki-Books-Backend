@@ -2,7 +2,7 @@ package com.masukibooks.service;
 
 import com.masukibooks.entity.Notification;
 import com.masukibooks.entity.User;
-import com.masukibooks.exception.ResourceNotFoundException;
+
 import com.masukibooks.repository.NotificationRepository;
 import com.masukibooks.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

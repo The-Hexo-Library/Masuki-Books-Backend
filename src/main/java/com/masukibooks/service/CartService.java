@@ -54,21 +54,37 @@ public class CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        Inventory inventory = inventoryRepository.findByProductProductId(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
+        boolean isDigital = "digital".equals(product.getContentType()) || "both".equals(product.getContentType());
 
-        if (inventory.getQuantity() < request.getQuantity()) {
-            throw new BusinessException("Insufficient stock");
+        if (!isDigital) {
+            // Physical product: validate inventory
+            Inventory inventory = inventoryRepository.findByProductProductId(request.getProductId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
+
+            if (inventory.getQuantity() < request.getQuantity()) {
+                throw new BusinessException("Insufficient stock");
+            }
         }
 
         CartItem item = cartItemRepository
                 .findByCartCartIdAndProductProductId(cartId, request.getProductId())
                 .orElse(CartItem.builder().cart(cart).product(product).quantity(0).build());
 
-        int newQty = item.getQuantity() + request.getQuantity();
-        if (inventory.getQuantity() < newQty) {
-            throw new BusinessException("Insufficient stock for requested quantity");
+        // Digital products: quantity locked to 1
+        int newQty;
+        if (isDigital) {
+            if (item.getCartItemId() != null) {
+                return toResponse(cartRepository.findById(cartId).get()); // already in cart
+            }
+            newQty = 1;
+        } else {
+            newQty = item.getQuantity() + request.getQuantity();
+            Inventory inventory = inventoryRepository.findByProductProductId(request.getProductId()).get();
+            if (inventory.getQuantity() < newQty) {
+                throw new BusinessException("Insufficient stock for requested quantity");
+            }
         }
+
         item.setQuantity(newQty);
         item.setUnitPrice(product.getPrice());
         cartItemRepository.save(item);
@@ -85,12 +101,19 @@ public class CartService {
         if (quantity <= 0) {
             cartItemRepository.delete(item);
         } else {
-            Inventory inv = inventoryRepository.findByProductProductId(item.getProduct().getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
-            if (inv.getQuantity() < quantity) {
-                throw new BusinessException("Insufficient stock");
+            boolean isDigital = "digital".equals(item.getProduct().getContentType())
+                    || "both".equals(item.getProduct().getContentType());
+            if (isDigital) {
+                // Digital products are always quantity 1
+                item.setQuantity(1);
+            } else {
+                Inventory inv = inventoryRepository.findByProductProductId(item.getProduct().getProductId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
+                if (inv.getQuantity() < quantity) {
+                    throw new BusinessException("Insufficient stock");
+                }
+                item.setQuantity(quantity);
             }
-            item.setQuantity(quantity);
             cartItemRepository.save(item);
         }
         return toResponse(cartRepository.findById(cartId).get());
@@ -115,9 +138,16 @@ public class CartService {
     private CartResponse toResponse(Cart cart) {
         List<CartItem> items = cart.getItems() != null ? cart.getItems() : List.of();
         List<CartResponse.CartItemResponse> itemResponses = items.stream().map(i -> {
-            Inventory inv = inventoryRepository
-                    .findByProductProductId(i.getProduct().getProductId()).orElse(null);
-            boolean inStock = inv != null && inv.getQuantity() >= i.getQuantity();
+            boolean isDigital = "digital".equals(i.getProduct().getContentType())
+                    || "both".equals(i.getProduct().getContentType());
+            boolean inStock;
+            if (isDigital) {
+                inStock = true; // digital products are always available
+            } else {
+                Inventory inv = inventoryRepository
+                        .findByProductProductId(i.getProduct().getProductId()).orElse(null);
+                inStock = inv != null && inv.getQuantity() >= i.getQuantity();
+            }
             BigDecimal lineTotal = i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity()));
             return (CartResponse.CartItemResponse) CartResponse.CartItemResponse.builder()
                     .cartItemId(i.getCartItemId())
