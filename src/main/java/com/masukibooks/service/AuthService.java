@@ -25,6 +25,7 @@ public class AuthService {
     private final AdminUserRepository adminUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final WalletService walletService;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -50,6 +51,9 @@ public class AuthService {
                 .build();
 
         user = userRepository.save(user);
+
+        // Auto-create wallet for new user
+        walletService.getOrCreateWallet(user.getUserId());
 
         String token = jwtTokenProvider.generateToken(user.getUserId(), user.getEmail(), "user");
         return AuthResponse.builder()
