@@ -1,0 +1,8 @@
+{
+  "name": "Engineering",
+  "slug": "engineering",
+  "description": "Engineering and technology books",
+  "collections": "core,featured",
+  "displayOrder": 1,
+  "isActive": true
+}
