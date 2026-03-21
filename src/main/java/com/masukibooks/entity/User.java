@@ -64,6 +64,11 @@ public class User {
     @Column(nullable = false, length = 20)
     private String status = "active"; // active, inactive, banned
 
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserRole role = UserRole.USER;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -75,9 +80,6 @@ public class User {
     // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch =
     // FetchType.LAZY)
     // private List<Address> addresses;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<UserAuthProvider> authProviders;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<UserLibrary> library;

@@ -2,10 +2,16 @@ package com.masukibooks.service;
 
 import com.masukibooks.dto.request.CheckoutRequest;
 import com.masukibooks.dto.response.OrderResponse;
-import com.masukibooks.entity.*;
+import com.masukibooks.entity.BooksMetadata;
+import com.masukibooks.entity.Cart;
+import com.masukibooks.entity.CartItem;
+import com.masukibooks.entity.Order;
+import com.masukibooks.entity.OrderItem;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
-import com.masukibooks.repository.*;
+import com.masukibooks.repository.CartRepository;
+import com.masukibooks.repository.OrderItemRepository;
+import com.masukibooks.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,14 +29,6 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
-
-    @SuppressWarnings("unused")
-    private final CartItemRepository cartItemRepository;
-    private final InventoryRepository inventoryRepository;
-    // private final AddressRepository addressRepository;
-    private final DiscountCodeRepository discountCodeRepository;
-    @SuppressWarnings("unused")
-    private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
 
     @Transactional
@@ -55,7 +52,7 @@ public class OrderService {
         boolean hasDigital = false;
 
         for (CartItem item : items) {
-            Product product = item.getProduct();
+            BooksMetadata product = item.getProduct();
             boolean isDigital = "digital".equals(product.getContentType()) || "both".equals(product.getContentType());
 
             if (isDigital) {
@@ -64,42 +61,12 @@ public class OrderService {
                 allDigital = false;
             }
 
-            // Only check inventory for physical products
-            if (!isDigital) {
-                Inventory inv = inventoryRepository.findByProductProductId(product.getProductId())
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Inventory not found for: " + product.getTitle()));
-                if (inv.getQuantity() < item.getQuantity()) {
-                    throw new BusinessException("Insufficient stock for: " + product.getTitle());
-                }
-            }
             subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
         String orderType = allDigital ? "digital" : (hasDigital ? "mixed" : "physical");
 
         BigDecimal discountAmount = BigDecimal.ZERO;
-        DiscountCode discountCode = null;
-        if (request.getDiscountCode() != null && !request.getDiscountCode().isBlank()) {
-            discountCode = discountCodeRepository.findByCodeAndIsActiveTrue(request.getDiscountCode())
-                    .orElseThrow(() -> new BusinessException("Invalid discount code"));
-            if (discountCode.getExpiresAt() != null && discountCode.getExpiresAt().isBefore(LocalDateTime.now())) {
-                throw new BusinessException("Discount code has expired");
-            }
-            if (discountCode.getMaxUses() != null && discountCode.getUsedCount() >= discountCode.getMaxUses()) {
-                throw new BusinessException("Discount code usage limit reached");
-            }
-            if (discountCode.getMinOrderAmount() != null
-                    && subtotal.compareTo(discountCode.getMinOrderAmount()) < 0) {
-                throw new BusinessException("Order does not meet minimum amount for discount");
-            }
-            if ("percentage".equals(discountCode.getType())) {
-                discountAmount = subtotal.multiply(discountCode.getValue())
-                        .divide(BigDecimal.valueOf(100));
-            } else {
-                discountAmount = discountCode.getValue().min(subtotal);
-            }
-        }
 
         BigDecimal total = subtotal.subtract(discountAmount);
 
@@ -144,7 +111,6 @@ public class OrderService {
                 .totalAmount(total)
                 .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
                 .status("pending")
-                .discountCode(discountCode)
                 .build();
 
         order = orderRepository.save(order);
@@ -161,15 +127,6 @@ public class OrderService {
                     .build();
             orderItemRepository.save(orderItem);
 
-            // Only deduct inventory for physical products
-            Product product = item.getProduct();
-            boolean isDigital = "digital".equals(product.getContentType()) || "both".equals(product.getContentType());
-            if (!isDigital) {
-                Inventory inv = inventoryRepository
-                        .findByProductProductId(product.getProductId()).get();
-                inv.setQuantity(inv.getQuantity() - item.getQuantity());
-                inventoryRepository.save(inv);
-            }
         }
 
         cart.setStatus("converted");
@@ -198,15 +155,6 @@ public class OrderService {
         }
         if (!List.of("pending", "confirmed").contains(order.getStatus())) {
             throw new BusinessException("Order cannot be cancelled in status: " + order.getStatus());
-        }
-        if (order.getItems() != null) {
-            for (OrderItem item : order.getItems()) {
-                inventoryRepository.findByProductProductId(item.getProduct().getProductId())
-                        .ifPresent(inv -> {
-                            inv.setQuantity(inv.getQuantity() + item.getQuantity());
-                            inventoryRepository.save(inv);
-                        });
-            }
         }
         order.setStatus("cancelled");
         return toResponse(orderRepository.save(order));

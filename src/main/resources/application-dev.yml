@@ -1,17 +1,24 @@
 # Development Configuration
 spring:
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://db.bbrxdsaojiqdgrdyghih.supabase.co:5432/postgres?sslmode=require}
-    username: ${DATABASE_USERNAME:postgres}
+    url: ${DATABASE_URL:jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    username: ${DATABASE_USERNAME:postgres.bbrxdsaojiqdgrdyghih}
     password: ${DATABASE_PASSWORD:r2yEdxF3Ath8t9Jt}
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
+      connection-timeout: 10000
+      validation-timeout: 5000
+      initialization-fail-timeout: 15000
 
   jpa:
     hibernate:
       ddl-auto: update  # Auto-create/update tables in dev
     show-sql: true
+
+  flyway:
+    connect-retries: 2
+    baseline-on-migrate: true
 
   mail:
     host: smtp.gmail.com

@@ -1,11 +1,15 @@
 package com.masukibooks.service;
 
 import com.masukibooks.dto.response.LibraryResponse;
-import com.masukibooks.dto.response.RecentReadResponse;
-import com.masukibooks.entity.*;
+import com.masukibooks.entity.BooksMetadata;
+import com.masukibooks.entity.User;
+import com.masukibooks.entity.UserLibrary;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
-import com.masukibooks.repository.*;
+import com.masukibooks.repository.BooksMetadataRepository;
+import com.masukibooks.repository.OrderRepository;
+import com.masukibooks.repository.UserLibraryRepository;
+import com.masukibooks.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,8 +25,7 @@ import java.util.UUID;
 public class UserLibraryService {
 
     private final UserLibraryRepository userLibraryRepository;
-    private final ReadingProgressRepository readingProgressRepository;
-    private final ProductRepository productRepository;
+    private final BooksMetadataRepository productRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
 
@@ -64,7 +67,7 @@ public class UserLibraryService {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        Product product = productRepository.findById(productId)
+        BooksMetadata product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         if (!"digital".equals(product.getContentType()) && !"both".equals(product.getContentType())) {
@@ -93,12 +96,6 @@ public class UserLibraryService {
         return toLibraryResponse(record);
     }
 
-    public Page<RecentReadResponse> getRecentlyRead(UUID userId, Pageable pageable) {
-        return readingProgressRepository
-                .findByUserUserIdOrderByLastReadAtDesc(userId, pageable)
-                .map(this::toRecentReadResponse);
-    }
-
     @Transactional
     public void removeFromLibrary(UUID userId, UUID productId) {
         UserLibrary record = userLibraryRepository
@@ -118,7 +115,7 @@ public class UserLibraryService {
     }
 
     private LibraryResponse toLibraryResponse(UserLibrary record) {
-        Product product = record.getProduct();
+        BooksMetadata product = record.getProduct();
 
         // String coverImageUrl = product.getImages() != null &&
         // !product.getImages().isEmpty()
@@ -128,11 +125,6 @@ public class UserLibraryService {
         // .findFirst()
         // .orElse(product.getImages().get(0).getUrl())
         // : null;
-
-        var progress = readingProgressRepository
-                .findByUserUserIdAndProductProductId(
-                        record.getUser().getUserId(), product.getProductId())
-                .orElse(null);
 
         return LibraryResponse.builder()
                 .userLibraryId(record.getUserLibraryId())
@@ -145,35 +137,10 @@ public class UserLibraryService {
                 .acquiredAt(record.getAcquiredAt())
                 .expiresAt(record.getExpiresAt())
                 .status(record.getStatus())
-                .currentPage(progress != null ? progress.getCurrentPage() : null)
+                .currentPage(null)
                 .totalPages(product.getTotalPages())
-                .readingPercentage(progress != null ? progress.getPercentage() : null)
-                .lastReadAt(progress != null ? progress.getLastReadAt() : null)
-                .build();
-    }
-
-    private RecentReadResponse toRecentReadResponse(ReadingProgress rp) {
-        Product product = rp.getProduct();
-
-        // String coverImageUrl = product.getImages() != null &&
-        // !product.getImages().isEmpty()
-        // ? product.getImages().stream()
-        // .filter(img -> Boolean.TRUE.equals(img.getIsPrimary()))
-        // .map(ProductImage::getUrl)
-        // .findFirst()
-        // .orElse(product.getImages().get(0).getUrl())
-        // : null;
-
-        return RecentReadResponse.builder()
-                .productId(product.getProductId())
-                .title(product.getTitle())
-                .author(product.getAuthor())
-                // .coverImageUrl(coverImageUrl)
-                .fileFormat(product.getFileFormat())
-                .lastReadAt(rp.getLastReadAt())
-                .currentPage(rp.getCurrentPage())
-                .totalPages(rp.getTotalPages())
-                .percentage(rp.getPercentage())
+                .readingPercentage(null)
+                .lastReadAt(null)
                 .build();
     }
 }

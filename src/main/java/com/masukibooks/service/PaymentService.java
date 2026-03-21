@@ -1,10 +1,9 @@
 package com.masukibooks.service;
 
-import com.masukibooks.dto.request.PaymentCallbackRequest;
 import com.masukibooks.entity.Order;
 import com.masukibooks.entity.OrderItem;
 import com.masukibooks.entity.Payment;
-import com.masukibooks.entity.Product;
+import com.masukibooks.entity.BooksMetadata;
 import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.OrderRepository;
 import com.masukibooks.repository.PaymentRepository;
@@ -40,26 +39,15 @@ public class PaymentService {
     }
 
     @Transactional
-    public Payment handleCallback(PaymentCallbackRequest request) {
-        Order order = orderRepository.findByOrderNumber(request.getOrderNumber())
+    public Payment markPaymentSuccess(UUID orderId, String gatewayTransactionId) {
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         Payment payment = paymentRepository.findTopByOrderOrderIdOrderByCreatedAtDesc(order.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
-
-        payment.setGatewayTransactionId(request.getGatewayTransactionId());
-        payment.setStatus(request.getStatus());
-
-        if ("completed".equals(request.getStatus())) {
-            payment.setStatus("success");
-            order.setStatus("confirmed");
-
-            // Auto-unlock digital books in user library
-            unlockDigitalContent(order);
-        } else if ("failed".equals(request.getStatus())) {
-            payment.setStatus("failed");
-            payment.setFailureReason(request.getFailureReason());
-        }
-
+        payment.setGatewayTransactionId(gatewayTransactionId);
+        payment.setStatus("success");
+        order.setStatus("confirmed");
+        unlockDigitalContent(order);
         orderRepository.save(order);
         return paymentRepository.save(payment);
     }
@@ -78,7 +66,7 @@ public class PaymentService {
         if (order.getItems() == null) return;
 
         for (OrderItem item : order.getItems()) {
-            Product product = item.getProduct();
+            BooksMetadata product = item.getProduct();
             if ("digital".equals(product.getContentType()) || "both".equals(product.getContentType())) {
                 try {
                     userLibraryService.addToLibrary(

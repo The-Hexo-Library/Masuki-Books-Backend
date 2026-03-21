@@ -45,10 +45,6 @@ public class Order {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "discount_id")
-    private DiscountCode discountCode;
-
     @Column(name = "discount_amount", precision = 10, scale = 2)
     private BigDecimal discountAmount;
 
