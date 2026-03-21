@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/orders")
+@RequestMapping("/orders")
 @RequiredArgsConstructor
 public class OrderController {
 
@@ -25,13 +25,15 @@ public class OrderController {
     private final JwtTokenProvider jwtTokenProvider;
 
     private UUID getCurrentUserId(String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) return null;
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return null;
         String token = authHeader.replace("Bearer ", "");
         try {
             if (jwtTokenProvider.validateToken(token)) {
                 return jwtTokenProvider.getUserIdFromToken(token);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return null;
     }
 

@@ -16,18 +16,31 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     Page<Product> findByCategoryCategoryIdAndStatus(UUID categoryId, String status, Pageable pageable);
 
-    @Query("""
-        SELECT p FROM Product p
+    @Query(value = """
+        SELECT p.* FROM products p
         WHERE p.status = 'active'
-        AND (:keyword IS NULL OR
-            LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-            OR LOWER(p.author) LIKE LOWER(CONCAT('%', :keyword, '%'))
-            OR p.isbn LIKE CONCAT('%', :keyword, '%'))
-        AND (:categoryId IS NULL OR p.category.categoryId = :categoryId)
-        AND (:language IS NULL OR p.language = :language)
-        AND (:minPrice IS NULL OR p.price >= :minPrice)
-        AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-    """)
+        AND (CAST(:keyword AS text) IS NULL OR
+            p.title ILIKE CONCAT('%', CAST(:keyword AS text), '%')
+            OR p.author ILIKE CONCAT('%', CAST(:keyword AS text), '%')
+            OR p.isbn LIKE CONCAT('%', CAST(:keyword AS text), '%'))
+        AND (CAST(:categoryId AS uuid) IS NULL OR p.category_id = CAST(:categoryId AS uuid))
+        AND (CAST(:language AS text) IS NULL OR p.language = CAST(:language AS text))
+        AND (CAST(:minPrice AS numeric) IS NULL OR p.price >= CAST(:minPrice AS numeric))
+        AND (CAST(:maxPrice AS numeric) IS NULL OR p.price <= CAST(:maxPrice AS numeric))
+    """,
+    countQuery = """
+        SELECT count(*) FROM products p
+        WHERE p.status = 'active'
+        AND (CAST(:keyword AS text) IS NULL OR
+            p.title ILIKE CONCAT('%', CAST(:keyword AS text), '%')
+            OR p.author ILIKE CONCAT('%', CAST(:keyword AS text), '%')
+            OR p.isbn LIKE CONCAT('%', CAST(:keyword AS text), '%'))
+        AND (CAST(:categoryId AS uuid) IS NULL OR p.category_id = CAST(:categoryId AS uuid))
+        AND (CAST(:language AS text) IS NULL OR p.language = CAST(:language AS text))
+        AND (CAST(:minPrice AS numeric) IS NULL OR p.price >= CAST(:minPrice AS numeric))
+        AND (CAST(:maxPrice AS numeric) IS NULL OR p.price <= CAST(:maxPrice AS numeric))
+    """,
+    nativeQuery = true)
     Page<Product> searchProducts(
             @Param("keyword") String keyword,
             @Param("categoryId") UUID categoryId,

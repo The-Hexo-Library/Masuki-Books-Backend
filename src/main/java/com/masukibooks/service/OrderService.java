@@ -24,10 +24,13 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
+
+    @SuppressWarnings("unused")
     private final CartItemRepository cartItemRepository;
     private final InventoryRepository inventoryRepository;
-    private final AddressRepository addressRepository;
+    // private final AddressRepository addressRepository;
     private final DiscountCodeRepository discountCodeRepository;
+    @SuppressWarnings("unused")
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
 
@@ -48,15 +51,32 @@ public class OrderService {
         }
 
         BigDecimal subtotal = BigDecimal.ZERO;
+        boolean allDigital = true;
+        boolean hasDigital = false;
+
         for (CartItem item : items) {
-            Inventory inv = inventoryRepository.findByProductProductId(item.getProduct().getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Inventory not found for: " + item.getProduct().getTitle()));
-            if (inv.getQuantity() < item.getQuantity()) {
-                throw new BusinessException("Insufficient stock for: " + item.getProduct().getTitle());
+            Product product = item.getProduct();
+            boolean isDigital = "digital".equals(product.getContentType()) || "both".equals(product.getContentType());
+
+            if (isDigital) {
+                hasDigital = true;
+            } else {
+                allDigital = false;
+            }
+
+            // Only check inventory for physical products
+            if (!isDigital) {
+                Inventory inv = inventoryRepository.findByProductProductId(product.getProductId())
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Inventory not found for: " + product.getTitle()));
+                if (inv.getQuantity() < item.getQuantity()) {
+                    throw new BusinessException("Insufficient stock for: " + product.getTitle());
+                }
             }
             subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
+
+        String orderType = allDigital ? "digital" : (hasDigital ? "mixed" : "physical");
 
         BigDecimal discountAmount = BigDecimal.ZERO;
         DiscountCode discountCode = null;
@@ -83,12 +103,31 @@ public class OrderService {
 
         BigDecimal total = subtotal.subtract(discountAmount);
 
-        Address shippingAddress = addressRepository.findById(request.getShippingAddressId())
-                .orElseThrow(() -> new ResourceNotFoundException("Shipping address not found"));
-        Address billingAddress = request.getBillingAddressId() != null
-                ? addressRepository.findById(request.getBillingAddressId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Billing address not found"))
-                : shippingAddress;
+        // Address handling: required for physical/mixed, optional for digital
+        // Address shippingAddress = null;
+        // Address billingAddress = null;
+
+        // if (!"digital".equals(orderType)) {
+        // if (request.getShippingAddressId() == null) {
+        // throw new BusinessException("Shipping address is required for physical
+        // orders");
+        // }
+        // shippingAddress = addressRepository.findById(request.getShippingAddressId())
+        // .orElseThrow(() -> new ResourceNotFoundException("Shipping address not
+        // found"));
+        // billingAddress = request.getBillingAddressId() != null
+        // ? addressRepository.findById(request.getBillingAddressId())
+        // .orElseThrow(() -> new ResourceNotFoundException("Billing address not
+        // found"))
+        // : shippingAddress;
+        // } else if (request.getShippingAddressId() != null) {
+        // // Allow optional address for digital orders too
+        // shippingAddress =
+        // addressRepository.findById(request.getShippingAddressId()).orElse(null);
+        // billingAddress = request.getBillingAddressId() != null
+        // ? addressRepository.findById(request.getBillingAddressId()).orElse(null)
+        // : shippingAddress;
+        // }
 
         String orderNumber = "ORD-" + System.currentTimeMillis();
 
@@ -96,10 +135,12 @@ public class OrderService {
                 .user(cart.getUser())
                 .guestEmail(request.getGuestEmail())
                 .orderNumber(orderNumber)
-                .shippingAddress(shippingAddress)
-                .billingAddress(billingAddress)
+                .orderType(orderType)
+                // .shippingAddress(shippingAddress)
+                // .billingAddress(billingAddress)
                 .subtotal(subtotal)
                 .discountAmount(discountAmount)
+                // .shippingAmount(shippingAmount)
                 .totalAmount(total)
                 .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
                 .status("pending")
@@ -120,10 +161,15 @@ public class OrderService {
                     .build();
             orderItemRepository.save(orderItem);
 
-            Inventory inv = inventoryRepository
-                    .findByProductProductId(item.getProduct().getProductId()).get();
-            inv.setQuantity(inv.getQuantity() - item.getQuantity());
-            inventoryRepository.save(inv);
+            // Only deduct inventory for physical products
+            Product product = item.getProduct();
+            boolean isDigital = "digital".equals(product.getContentType()) || "both".equals(product.getContentType());
+            if (!isDigital) {
+                Inventory inv = inventoryRepository
+                        .findByProductProductId(product.getProductId()).get();
+                inv.setQuantity(inv.getQuantity() - item.getQuantity());
+                inventoryRepository.save(inv);
+            }
         }
 
         cart.setStatus("converted");
@@ -187,32 +233,35 @@ public class OrderService {
                         .orderItemId(i.getOrderItemId())
                         .productId(i.getProduct().getProductId())
                         .productTitle(i.getProductTitle() != null
-                                ? i.getProductTitle() : i.getProduct().getTitle())
+                                ? i.getProductTitle()
+                                : i.getProduct().getTitle())
                         .quantity(i.getQuantity())
                         .unitPrice(i.getUnitPrice())
                         .totalPrice(i.getTotalPrice())
                         .build()).collect(Collectors.toList());
 
-        OrderResponse.AddressResponse shipping = o.getShippingAddress() == null ? null
-                : OrderResponse.AddressResponse.builder()
-                        .addressId(o.getShippingAddress().getAddressId())
-                        .addressLine1(o.getShippingAddress().getAddressLine1())
-                        .city(o.getShippingAddress().getCity())
-                        .state(o.getShippingAddress().getState())
-                        .zipCode(o.getShippingAddress().getZipCode())
-                        .country(o.getShippingAddress().getCountry())
-                        .build();
+        // OrderResponse.AddressResponse shipping = o.getShippingAddress() == null ?
+        // null
+        // : OrderResponse.AddressResponse.builder()
+        // .addressId(o.getShippingAddress().getAddressId())
+        // .addressLine1(o.getShippingAddress().getAddressLine1())
+        // .city(o.getShippingAddress().getCity())
+        // .state(o.getShippingAddress().getState())
+        // .zipCode(o.getShippingAddress().getZipCode())
+        // .country(o.getShippingAddress().getCountry())
+        // .build();
 
         return OrderResponse.builder()
                 .orderId(o.getOrderId())
                 .orderNumber(o.getOrderNumber())
                 .status(o.getStatus())
+                .orderType(o.getOrderType())
                 .subtotal(o.getSubtotal())
                 .discountAmount(o.getDiscountAmount())
                 .totalAmount(o.getTotalAmount())
                 .currency(o.getCurrency())
                 .guestEmail(o.getGuestEmail())
-                .shippingAddress(shipping)
+                // .shippingAddress(shipping)
                 .items(itemResponses)
                 .createdAt(o.getCreatedAt())
                 .build();

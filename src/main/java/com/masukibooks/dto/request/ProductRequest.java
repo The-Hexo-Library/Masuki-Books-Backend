@@ -27,6 +27,7 @@ public class ProductRequest {
     @NotBlank
     private String format;  // paperback, hardcover, ebook, audiobook
 
+    private String language;
     private Integer pages;
     private LocalDate publicationDate;
 
@@ -36,4 +37,13 @@ public class ProductRequest {
     private BigDecimal compareAtPrice;
 
     private String status = "draft";
+
+    // Digital content fields
+    private String contentType = "physical";  // physical, digital, both
+    private String fileFormat;  // pdf, epub
+    private Long fileSizeBytes;
+    private Integer totalPages;
+    private Integer previewPages;
+    private Boolean downloadable;
+    private Integer maxDownloads;
 }

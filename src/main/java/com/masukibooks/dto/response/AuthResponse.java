@@ -5,10 +5,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data @Builder
+@Data
+@Builder
 public class AuthResponse {
     private String accessToken;
-    private String tokenType = "Bearer";
+    private String tokenType;
     private UUID userId;
     private String email;
     private String firstName;

@@ -10,10 +10,13 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cart_items",
-       uniqueConstraints = @UniqueConstraint(columnNames = {"cart_id", "product_id"}),
-       indexes = @Index(name = "idx_cart_items_cart", columnList = "cart_id"))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "cart_items", uniqueConstraints = @UniqueConstraint(columnNames = { "cart_id",
+        "product_id" }), indexes = @Index(name = "idx_cart_items_cart", columnList = "cart_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CartItem {
 
     @Id
@@ -30,7 +33,7 @@ public class CartItem {
     private Product product;
 
     @Column(nullable = false)
-    private Integer quantity = 1;
+    private Integer quantity;
 
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;

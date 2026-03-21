@@ -31,14 +31,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         String token = extractToken(request);
         if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
             UUID userId = tokenProvider.getUserIdFromToken(token);
             String role = tokenProvider.getRoleFromToken(token);
 
             Object principal = null;
+            @SuppressWarnings("unused")
             List<SimpleGrantedAuthority> authorities;
 
             if (role != null && (role.contains("admin") || role.contains("moderator"))) {
@@ -61,10 +62,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(principal, null, 
-                        ((List<SimpleGrantedAuthority>) 
-                        (principal instanceof AdminUser 
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principal,
+                    null,
+                    ((List<SimpleGrantedAuthority>) (principal instanceof AdminUser
                             ? List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                             : List.of(new SimpleGrantedAuthority("ROLE_USER")))));
             SecurityContextHolder.getContext().setAuthentication(authentication);

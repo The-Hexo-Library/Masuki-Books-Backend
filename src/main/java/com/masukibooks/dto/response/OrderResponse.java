@@ -12,6 +12,7 @@ public class OrderResponse {
     private UUID orderId;
     private String orderNumber;
     private String status;
+    private String orderType;
     private String guestEmail;
     private BigDecimal subtotal;
     private BigDecimal discountAmount;

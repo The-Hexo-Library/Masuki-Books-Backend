@@ -107,6 +107,13 @@
             <version>2.25.16</version>
         </dependency>
 
+        <!-- Apache PDFBox for PDF page extraction -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

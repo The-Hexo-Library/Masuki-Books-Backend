@@ -15,11 +15,12 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/payments")
+@RequestMapping("/payments")
 @RequiredArgsConstructor
 public class PaymentController {
 
     private final PaymentService paymentService;
+    @SuppressWarnings("unused")
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/initiate")

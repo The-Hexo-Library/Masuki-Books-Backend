@@ -8,7 +8,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "inventory")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Inventory {
 
     @Id
@@ -21,10 +25,10 @@ public class Inventory {
     private Product product;
 
     @Column(nullable = false)
-    private Integer quantity = 0;
+    private Integer quantity;
 
     @Column(name = "low_stock_threshold", nullable = false)
-    private Integer lowStockThreshold = 10;
+    private Integer lowStockThreshold;
 
     @Column(name = "last_updated", nullable = false)
     private LocalDateTime lastUpdated;
