@@ -1,0 +1,7 @@
+{
+  "planName": "Monthly Reader",
+  "description": "Unlimited reading for 30 days",
+  "price": 199.0,
+  "durationDays": 30,
+  "autoRenew": true
+}

@@ -42,6 +42,9 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(columnDefinition = "TEXT")
+    private String collections;
+
     // @Column(name = "image_url", length = 500)
     // private String imageUrl;
 
@@ -63,5 +66,5 @@ public class Category {
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<Product> products;
+    private List<BooksMetadata> products;
 }

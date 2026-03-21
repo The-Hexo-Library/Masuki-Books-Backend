@@ -2,19 +2,3 @@
   "identifier": "john.reader@example.com",
   "password": "Password@123"
 }
-
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIwMjEyNWE4OS01M2QyLTQ1N2MtOTZkMy0wNGNkYTgwOGU2ODkiLCJlbWFpbCI6ImpvaG4ucmVhZGVyQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NzQwMjAxNjEsImV4cCI6MTc3NDEwNjU2MX0.NwtNdIm6kxlWVgSLb7jOZAeSNnkDIPaqSUkqXTH_A6m7PFwt_5jtouFnZopZz4WcFz7dmAuCzEv2WWHoU7Of7Q",
-    "tokenType": "Bearer",
-    "userId": "02125a89-53d2-457c-96d3-04cda808e689",
-    "email": "john.reader@example.com",
-    "firstName": "John",
-    "lastName": "Reader",
-    "role": "user",
-    "expiresAt": null
-  },
-  "timestamp": "2026-03-20T20:52:41.9808875"
-}
