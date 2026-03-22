@@ -4,6 +4,7 @@ import com.masukibooks.dto.request.ProductRequest;
 import com.masukibooks.dto.response.ProductResponse;
 import com.masukibooks.entity.BooksMetadata;
 import com.masukibooks.entity.Category;
+import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.BooksMetadataRepository;
 import com.masukibooks.repository.CategoryRepository;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 // import java.util.List;
 import java.util.UUID;
@@ -23,6 +25,7 @@ public class ProductService {
 
     private final BooksMetadataRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final BookStorageService bookStorageService;
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(String keyword, UUID categoryId,
@@ -37,6 +40,14 @@ public class ProductService {
         BooksMetadata product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         return toResponse(product);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> getAllProducts(String status, Pageable pageable) {
+        if (status != null && !status.isBlank()) {
+            return productRepository.findByStatus(status, pageable).map(this::toResponse);
+        }
+        return productRepository.findAll(pageable).map(this::toResponse);
     }
 
     @Transactional
@@ -68,7 +79,16 @@ public class ProductService {
                 .maxDownloads(request.getMaxDownloads() != null ? request.getMaxDownloads() : 3)
                 .build();
 
-        return toResponse(productRepository.save(product));
+        BooksMetadata saved = productRepository.save(product);
+
+        String metadataKey = bookStorageService.uploadBookMetadata(saved);
+        saved.setFileKey(metadataKey);
+        if (saved.getFileFormat() == null || saved.getFileFormat().isBlank()) {
+            saved.setFileFormat("json");
+        }
+
+        saved = productRepository.save(saved);
+        return toResponse(saved);
     }
 
     @Transactional
@@ -87,8 +107,22 @@ public class ProductService {
             product.setDescription(request.getDescription());
         if (request.getAuthor() != null)
             product.setAuthor(request.getAuthor());
+        if (request.getSku() != null)
+            product.setSku(request.getSku());
+        if (request.getPublisher() != null)
+            product.setPublisher(request.getPublisher());
+        if (request.getIsbn() != null)
+            product.setIsbn(request.getIsbn());
+        if (request.getFormat() != null)
+            product.setFormat(request.getFormat());
+        if (request.getPages() != null)
+            product.setPages(request.getPages());
+        if (request.getPublicationDate() != null)
+            product.setPublicationDate(request.getPublicationDate());
         if (request.getPrice() != null)
             product.setPrice(request.getPrice());
+        if (request.getCompareAtPrice() != null)
+            product.setCompareAtPrice(request.getCompareAtPrice());
         if (request.getLanguage() != null)
             product.setLanguage(request.getLanguage());
         if (request.getStatus() != null)
@@ -119,6 +153,31 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         product.setStatus("inactive");
         productRepository.save(product);
+    }
+
+    @Transactional
+    public ProductResponse uploadBookFile(UUID productId, MultipartFile file) {
+        BooksMetadata product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("Book file is required.");
+        }
+
+        String fileKey = bookStorageService.uploadBookFile(productId, file);
+        product.setFileKey(fileKey);
+        product.setFileSizeBytes(file.getSize());
+
+        String ext = extractExtension(file.getOriginalFilename());
+        if (!ext.isBlank()) {
+            product.setFileFormat(ext);
+        }
+
+        if (product.getContentType() == null || product.getContentType().isBlank() || "physical".equalsIgnoreCase(product.getContentType())) {
+            product.setContentType("digital");
+        }
+
+        return toResponse(productRepository.save(product));
     }
 
     // @Transactional
@@ -152,6 +211,7 @@ public class ProductService {
                 .categoryId(catId)
                 .categoryName(catName)
                 .isbn(p.getIsbn())
+                .sku(p.getSku())
                 .title(p.getTitle())
                 .description(p.getDescription())
                 .author(p.getAuthor())
@@ -161,16 +221,31 @@ public class ProductService {
                 .pages(p.getPages())
                 .publicationDate(p.getPublicationDate())
                 .price(p.getPrice())
+                .compareAtPrice(p.getCompareAtPrice())
                 .status(p.getStatus())
                 .stockQuantity(null)
                 .inStock(true)
                 .averageRating(null)
                 .contentType(p.getContentType())
+                .fileKey(p.getFileKey())
                 .fileFormat(p.getFileFormat())
+                .fileSizeBytes(p.getFileSizeBytes())
                 .totalPages(p.getTotalPages())
                 .previewPages(p.getPreviewPages())
                 .downloadable(Boolean.TRUE.equals(p.getDownloadable()))
+                .maxDownloads(p.getMaxDownloads())
                 .createdAt(p.getCreatedAt())
                 .build();
+    }
+
+    private String extractExtension(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return "";
+        }
+        int idx = filename.lastIndexOf('.');
+        if (idx < 0 || idx == filename.length() - 1) {
+            return "";
+        }
+        return filename.substring(idx + 1).toLowerCase();
     }
 }

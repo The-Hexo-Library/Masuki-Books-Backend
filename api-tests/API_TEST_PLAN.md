@@ -29,6 +29,9 @@ Auth header:
 
 ## Step 3: Admin Endpoints (use admin JWT)
 - GET /admin/users
+- GET /admin/orders
+- PATCH /admin/orders/{orderId}/status -> api-tests/payloads/admin-order-status-update.json
+- GET /admin/books
 - POST /admin/books -> api-tests/payloads/admin-book-create.json
 - PUT /admin/books/{bookId} -> api-tests/payloads/admin-book-update.json
 - DELETE /admin/books/{bookId}

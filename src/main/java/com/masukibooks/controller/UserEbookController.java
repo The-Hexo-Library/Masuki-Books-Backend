@@ -3,6 +3,7 @@ package com.masukibooks.controller;
 import com.masukibooks.dto.request.*;
 import com.masukibooks.dto.response.*;
 import com.masukibooks.entity.User;
+import com.masukibooks.exception.BusinessException;
 import com.masukibooks.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class UserEbookController {
                 .slug(c.getSlug())
                 .description(c.getDescription())
                 .displayOrder(c.getDisplayOrder())
+            .isActive(c.getIsActive())
                 .build()).toList();
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved", dtos));
     }
@@ -121,6 +123,9 @@ public class UserEbookController {
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ApiResponse<Page<LibraryResponse>>> userLibrary(@AuthenticationPrincipal User user,
             @PageableDefault(size = 20) Pageable pageable) {
+        if (!subscriptionService.isSubscriptionActive(user.getUserId())) {
+            throw new BusinessException("Subscribe to access your private library");
+        }
         return ResponseEntity.ok(ApiResponse.success("User library retrieved",
                 userLibraryService.getUserLibrary(user.getUserId(), null, null, pageable)));
     }
@@ -130,6 +135,15 @@ public class UserEbookController {
     public ResponseEntity<ApiResponse<LibraryResponse>> addToLibrary(@AuthenticationPrincipal User user,
             @PathVariable UUID bookId,
             @RequestBody(required = false) Map<String, String> body) {
+        if (!subscriptionService.isSubscriptionActive(user.getUserId())) {
+            throw new BusinessException("Subscribe to access your private library");
+        }
+
+        var access = subscriptionService.checkAccessLimit(user.getUserId());
+        if (access.limitExceeded()) {
+            throw new BusinessException("Upgrade your plan to access more books");
+        }
+
         String accessType = body != null && body.containsKey("accessType") ? body.get("accessType") : "sample";
         return ResponseEntity.ok(ApiResponse.success("Book added to user library",
                 userLibraryService.addToLibrary(user.getUserId(), bookId, accessType, null)));

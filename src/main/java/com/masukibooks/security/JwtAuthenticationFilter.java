@@ -1,6 +1,7 @@
 package com.masukibooks.security;
 
 import com.masukibooks.entity.User;
+import com.masukibooks.entity.UserRole;
 import com.masukibooks.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,13 +34,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
         if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
             UUID userId = tokenProvider.getUserIdFromToken(token);
+            String tokenRole = tokenProvider.getRoleFromToken(token);
             Optional<User> user = userRepository.findById(userId);
+
+            if (user.isEmpty() && "ADMIN".equalsIgnoreCase(tokenRole)) {
+                User adminPrincipal = User.builder()
+                        .userId(userId)
+                        .email(tokenProvider.getEmailFromToken(token))
+                        .firstName("Admin")
+                        .lastName("User")
+                        .status("active")
+                        .role(UserRole.ADMIN)
+                        .build();
+                user = Optional.of(adminPrincipal);
+            }
+
             if (user.isEmpty()) {
                 filterChain.doFilter(request, response);
                 return;
             }
             User principal = user.get();
-            String role = principal.getRole() != null ? principal.getRole().name() : "USER";
+            String role = principal.getRole() != null ? principal.getRole().name() : tokenRole;
+            if (!StringUtils.hasText(role)) {
+                role = "USER";
+            }
             List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principal,
