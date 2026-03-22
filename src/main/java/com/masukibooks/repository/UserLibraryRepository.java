@@ -22,4 +22,6 @@ public interface UserLibraryRepository extends JpaRepository<UserLibrary, UUID> 
     Optional<UserLibrary> findByUserUserIdAndProductProductId(UUID userId, UUID productId);
 
     boolean existsByUserUserIdAndProductProductIdAndStatusIn(UUID userId, UUID productId, List<String> statuses);
+
+    long countByUserUserIdAndStatus(UUID userId, String status);
 }

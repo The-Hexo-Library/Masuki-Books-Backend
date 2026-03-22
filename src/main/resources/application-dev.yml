@@ -17,8 +17,7 @@ spring:
     show-sql: true
 
   flyway:
-    connect-retries: 2
-    baseline-on-migrate: true
+    enabled: false
 
   mail:
     host: smtp.gmail.com
