@@ -1,6 +1,5 @@
 # Development Configuration
-server:
-  port: ${PORT:8080}
+
 spring:
   datasource:
     url: ${DATABASE_URL:jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
