@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8081}
+  port: ${PORT:8080}
 
 spring:
   profiles:
@@ -78,7 +78,7 @@ app:
   otp:
     expiry-minutes: ${OTP_EXPIRY_MINUTES:10}
 
-  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  frontend-url: ${FRONTEND_URL:https://playful-torrone-b69ea0.netlify.app/}
 
 springdoc:
   api-docs:
