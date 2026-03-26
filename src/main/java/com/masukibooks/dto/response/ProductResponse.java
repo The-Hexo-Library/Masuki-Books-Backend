@@ -34,8 +34,11 @@ public class ProductResponse {
 
     // Digital content fields
     private String contentType;
+    private String fileKey;
     private String fileFormat;
+    private Long fileSizeBytes;
     private Integer totalPages;
     private Integer previewPages;
     private boolean downloadable;
+    private Integer maxDownloads;
 }
