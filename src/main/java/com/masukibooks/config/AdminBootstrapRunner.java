@@ -1,22 +1,22 @@
 package com.masukibooks.config;
 
+import com.masukibooks.entity.User;
+import com.masukibooks.entity.UserRole;
+import com.masukibooks.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AdminBootstrapRunner implements ApplicationRunner {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.bootstrap-admin.enabled:true}")
@@ -46,32 +46,44 @@ public class AdminBootstrapRunner implements ApplicationRunner {
             return;
         }
 
-        Integer existing = jdbcTemplate.queryForObject(
-                "SELECT COUNT(1) FROM public.admin_users WHERE lower(email) = lower(?)",
-                Integer.class,
-                normalizedEmail
-        );
-
-        if (existing != null && existing > 0) {
-            log.info("Admin bootstrap: account already exists for {}", normalizedEmail);
+        User existing = userRepository.findByEmail(normalizedEmail).orElse(null);
+        if (existing != null) {
+            boolean changed = false;
+            if (existing.getRole() != UserRole.ADMIN) {
+                existing.setRole(UserRole.ADMIN);
+                changed = true;
+            }
+            if (!"active".equalsIgnoreCase(existing.getStatus())) {
+                existing.setStatus("active");
+                changed = true;
+            }
+            if (existing.getPasswordHash() == null || !passwordEncoder.matches(password, existing.getPasswordHash())) {
+                existing.setPasswordHash(passwordEncoder.encode(password));
+                changed = true;
+            }
+            if (changed) {
+                userRepository.save(existing);
+                log.info("Admin bootstrap: updated admin account for {} in users table", normalizedEmail);
+            } else {
+                log.info("Admin bootstrap: account already active with ADMIN role for {}", normalizedEmail);
+            }
             return;
         }
 
-        jdbcTemplate.update(
-                """
-                INSERT INTO public.admin_users
-                    (admin_id, email, password_hash, first_name, last_name, role, is_active, created_at, updated_at)
-                VALUES
-                    (?, ?, ?, ?, ?, ?, true, now(), now())
-                """,
-                UUID.randomUUID(),
-                normalizedEmail,
-                passwordEncoder.encode(password),
-                firstName,
-                lastName,
-                "ADMIN"
-        );
+        User admin = User.builder()
+                .email(normalizedEmail)
+                .passwordHash(passwordEncoder.encode(password))
+                .firstName(firstName)
+                .lastName(lastName)
+                .preferredLanguage("en")
+                .piiConsent(false)
+                .emailVerified(true)
+                .phoneVerified(false)
+                .status("active")
+                .role(UserRole.ADMIN)
+                .build();
 
-        log.info("Admin bootstrap: created default admin account for {}", normalizedEmail);
+        userRepository.save(admin);
+        log.info("Admin bootstrap: created default admin account for {} in users table", normalizedEmail);
     }
 }

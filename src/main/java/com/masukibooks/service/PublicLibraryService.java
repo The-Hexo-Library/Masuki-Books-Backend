@@ -20,6 +20,7 @@ public class PublicLibraryService {
 
     private final PublicLibraryRepository publicLibraryRepository;
     private final BooksMetadataRepository productRepository;
+    private final BookStorageService bookStorageService;
 
     public List<PublicLibraryResponse> listPublicItems() {
         return publicLibraryRepository.findByVisibilityOrderByCreatedAtDesc("public")
@@ -70,6 +71,7 @@ public class PublicLibraryService {
                 .productId(record.getProduct().getProductId())
                 .title(record.getProduct().getTitle())
                 .author(record.getProduct().getAuthor())
+            .fileUrl(bookStorageService.resolvePublicUrl(record.getProduct().getFileKey()))
                 .visibility(record.getVisibility())
                 .isFeatured(record.getIsFeatured())
                 .notes(record.getNotes())
