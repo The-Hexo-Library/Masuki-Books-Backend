@@ -12,6 +12,7 @@ public class PublicLibraryResponse {
     private UUID productId;
     private String title;
     private String author;
+    private String fileUrl;
     private String visibility;
     private Boolean isFeatured;
     private String notes;

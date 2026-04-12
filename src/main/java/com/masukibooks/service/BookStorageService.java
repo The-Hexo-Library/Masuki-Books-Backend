@@ -46,6 +46,12 @@ public class BookStorageService {
     @Value("${storage.s3.bucket:books}")
     private String bucket;
 
+    @Value("${storage.s3.object-key-prefix:storage/manage/books}")
+    private String objectKeyPrefix;
+
+    @Value("${storage.s3.public-url-prefix:}")
+    private String publicUrlPrefix;
+
     public String uploadBookMetadata(BooksMetadata product) {
         if (product == null || product.getProductId() == null) {
             throw new BusinessException("Cannot upload metadata for an unsaved product.");
@@ -86,7 +92,7 @@ public class BookStorageService {
         validateStorageConfig();
 
         String objectKey = buildFileKey(productId, file.getOriginalFilename());
-        String contentType = isBlank(file.getContentType()) ? "application/octet-stream" : file.getContentType();
+        String contentType = resolveContentType(file);
 
         try (S3Client client = buildClient()) {
             PutObjectRequest request = PutObjectRequest.builder()
@@ -118,14 +124,26 @@ public class BookStorageService {
     }
 
     private String buildMetadataKey(UUID productId) {
-        return "books/" + productId + "/metadata.json";
+        return cleanPrefix(objectKeyPrefix) + "/" + productId + "/metadata.json";
     }
 
     private String buildFileKey(UUID productId, String originalFilename) {
         String safeName = (originalFilename == null || originalFilename.isBlank())
                 ? "book-file"
                 : originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_");
-        return "books/" + productId + "/files/" + UUID.randomUUID() + "-" + safeName;
+        return cleanPrefix(objectKeyPrefix) + "/" + productId + "/files/" + UUID.randomUUID() + "-" + safeName;
+    }
+
+    public String resolvePublicUrl(String objectKey) {
+        if (isBlank(objectKey) || isBlank(publicUrlPrefix)) {
+            return null;
+        }
+
+        String cleanPrefix = publicUrlPrefix.endsWith("/")
+                ? publicUrlPrefix.substring(0, publicUrlPrefix.length() - 1)
+                : publicUrlPrefix;
+        String cleanKey = objectKey.startsWith("/") ? objectKey.substring(1) : objectKey;
+        return cleanPrefix + "/" + cleanKey;
     }
 
     private String toJsonPayload(BooksMetadata product) {
@@ -157,6 +175,29 @@ public class BookStorageService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private String cleanPrefix(String value) {
+        if (isBlank(value)) {
+            return "storage/manage/books";
+        }
+        String trimmed = value.trim();
+        while (trimmed.startsWith("/")) {
+            trimmed = trimmed.substring(1);
+        }
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
+    }
+
+    private String resolveContentType(MultipartFile file) {
+        String originalName = file.getOriginalFilename();
+        if (originalName != null && originalName.toLowerCase().endsWith(".pdf")) {
+            return "application/pdf";
+        }
+        String contentType = file.getContentType();
+        return isBlank(contentType) ? "application/octet-stream" : contentType;
     }
 
     private void validateStorageConfig() {

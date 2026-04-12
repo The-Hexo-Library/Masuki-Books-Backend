@@ -4,10 +4,12 @@ import com.masukibooks.dto.request.ProductRequest;
 import com.masukibooks.dto.response.ProductResponse;
 import com.masukibooks.entity.BooksMetadata;
 import com.masukibooks.entity.Category;
+import com.masukibooks.entity.PublicLibrary;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.BooksMetadataRepository;
 import com.masukibooks.repository.CategoryRepository;
+import com.masukibooks.repository.PublicLibraryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ public class ProductService {
 
     private final BooksMetadataRepository productRepository;
     private final CategoryRepository categoryRepository;
+    private final PublicLibraryRepository publicLibraryRepository;
     private final BookStorageService bookStorageService;
 
     @Transactional(readOnly = true)
@@ -88,6 +91,9 @@ public class ProductService {
         }
 
         saved = productRepository.save(saved);
+        if ("published".equalsIgnoreCase(saved.getStatus())) {
+            ensurePublicVisibility(saved);
+        }
         return toResponse(saved);
     }
 
@@ -144,7 +150,11 @@ public class ProductService {
         if (request.getMaxDownloads() != null)
             product.setMaxDownloads(request.getMaxDownloads());
 
-        return toResponse(productRepository.save(product));
+        BooksMetadata saved = productRepository.save(product);
+        if ("published".equalsIgnoreCase(saved.getStatus())) {
+            ensurePublicVisibility(saved);
+        }
+        return toResponse(saved);
     }
 
     @Transactional
@@ -177,7 +187,9 @@ public class ProductService {
             product.setContentType("digital");
         }
 
-        return toResponse(productRepository.save(product));
+        BooksMetadata saved = productRepository.save(product);
+        ensurePublicVisibility(saved);
+        return toResponse(saved);
     }
 
     // @Transactional
@@ -228,6 +240,7 @@ public class ProductService {
                 .averageRating(null)
                 .contentType(p.getContentType())
                 .fileKey(p.getFileKey())
+                .fileUrl(bookStorageService.resolvePublicUrl(p.getFileKey()))
                 .fileFormat(p.getFileFormat())
                 .fileSizeBytes(p.getFileSizeBytes())
                 .totalPages(p.getTotalPages())
@@ -247,5 +260,17 @@ public class ProductService {
             return "";
         }
         return filename.substring(idx + 1).toLowerCase();
+    }
+
+    private void ensurePublicVisibility(BooksMetadata product) {
+        publicLibraryRepository.findByProductProductId(product.getProductId()).orElseGet(() -> {
+            PublicLibrary record = PublicLibrary.builder()
+                    .product(product)
+                    .visibility("public")
+                    .isFeatured(false)
+                    .editable(true)
+                    .build();
+            return publicLibraryRepository.save(record);
+        });
     }
 }

@@ -71,29 +71,6 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         String identifier = normalizeIdentifier(request.getIdentifier());
-        Optional<LoginPrincipal> adminPrincipal = findAdminPrincipal(identifier);
-        if (adminPrincipal.isPresent()) {
-            LoginPrincipal admin = adminPrincipal.get();
-
-            if (!passwordEncoder.matches(request.getPassword(), admin.passwordHash())) {
-                throw new BusinessException("Invalid credentials");
-            }
-            if (!"active".equalsIgnoreCase(admin.status())) {
-                throw new BusinessException("Account is " + admin.status());
-            }
-
-            String token = jwtTokenProvider.generateToken(admin.id(), admin.email(), UserRole.ADMIN.name());
-            return AuthResponse.builder()
-                    .accessToken(token)
-                    .tokenType("Bearer")
-                    .userId(admin.id())
-                    .email(admin.email())
-                    .firstName(admin.firstName())
-                    .lastName(admin.lastName())
-                    .role(UserRole.ADMIN.name())
-                    .build();
-        }
-
         User user = findUserByIdentifier(identifier)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -116,48 +93,6 @@ public class AuthService {
                 .build();
     }
 
-    private Optional<LoginPrincipal> findAdminPrincipal(String identifier) {
-        try {
-            List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                    """
-                    SELECT *
-                    FROM public.admin_users
-                    WHERE lower(email) = lower(?)
-                    LIMIT 1
-                    """,
-                    identifier
-            );
-
-            if (rows.isEmpty()) {
-                return Optional.empty();
-            }
-
-            Map<String, Object> row = rows.get(0);
-            UUID id = extractUuid(row, "admin_id", "user_id", "admin_user_id", "id");
-            String email = extractString(row, "email");
-            String passwordHash = extractString(row, "password_hash", "password");
-            String firstName = extractString(row, "first_name", "name");
-            String lastName = extractString(row, "last_name");
-            String status = extractStatus(row);
-
-            if (id == null || email == null || passwordHash == null) {
-                return Optional.empty();
-            }
-
-            return Optional.of(new LoginPrincipal(
-                    id,
-                    email,
-                    passwordHash,
-                    firstName == null ? "Admin" : firstName,
-                    lastName == null ? "User" : lastName,
-                    status == null ? "active" : status
-            ));
-        } catch (DataAccessException ex) {
-            // If admin_users is not present in this environment, continue with users table login.
-            return Optional.empty();
-        }
-    }
-
     private UUID extractUuid(Map<String, Object> row, String... keys) {
         for (String key : keys) {
             Object value = row.get(key);
@@ -169,40 +104,6 @@ public class AuthService {
             }
         }
         return null;
-    }
-
-    private String extractString(Map<String, Object> row, String... keys) {
-        for (String key : keys) {
-            Object value = row.get(key);
-            if (value instanceof String str && !str.isBlank()) {
-                return str;
-            }
-        }
-        return null;
-    }
-
-    private String extractStatus(Map<String, Object> row) {
-        String status = extractString(row, "status");
-        if (status != null) {
-            return status;
-        }
-
-        Object activeValue = row.get("is_active");
-        if (activeValue instanceof Boolean active) {
-            return active ? "active" : "inactive";
-        }
-
-        return "active";
-    }
-
-    private record LoginPrincipal(
-            UUID id,
-            String email,
-            String passwordHash,
-            String firstName,
-            String lastName,
-            String status
-    ) {
     }
 
     private String normalizeIdentifier(String identifier) {
@@ -245,29 +146,6 @@ public class AuthService {
 
     public AuthResponse adminLogin(LoginRequest request) {
         String identifier = normalizeIdentifier(request.getIdentifier());
-
-        Optional<LoginPrincipal> adminPrincipal = findAdminPrincipal(identifier);
-        if (adminPrincipal.isPresent()) {
-            LoginPrincipal admin = adminPrincipal.get();
-
-            if (!passwordEncoder.matches(request.getPassword(), admin.passwordHash())) {
-                throw new BusinessException("Invalid credentials");
-            }
-            if (!"active".equalsIgnoreCase(admin.status())) {
-                throw new BusinessException("Account is " + admin.status());
-            }
-
-            String token = jwtTokenProvider.generateToken(admin.id(), admin.email(), UserRole.ADMIN.name());
-            return AuthResponse.builder()
-                    .accessToken(token)
-                    .tokenType("Bearer")
-                    .userId(admin.id())
-                    .email(admin.email())
-                    .firstName(admin.firstName())
-                    .lastName(admin.lastName())
-                    .role(UserRole.ADMIN.name())
-                    .build();
-        }
 
         User admin = findUserByIdentifier(identifier)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
