@@ -2,10 +2,16 @@ package com.masukibooks.service;
 
 import com.masukibooks.dto.request.CartItemRequest;
 import com.masukibooks.dto.response.CartResponse;
-import com.masukibooks.entity.*;
+import com.masukibooks.entity.BooksMetadata;
+import com.masukibooks.entity.Cart;
+import com.masukibooks.entity.CartItem;
+import com.masukibooks.entity.User;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
-import com.masukibooks.repository.*;
+import com.masukibooks.repository.BooksMetadataRepository;
+import com.masukibooks.repository.CartItemRepository;
+import com.masukibooks.repository.CartRepository;
+import com.masukibooks.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +27,7 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ProductRepository productRepository;
-    private final InventoryRepository inventoryRepository;
+    private final BooksMetadataRepository productRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -51,24 +56,26 @@ public class CartService {
     public CartResponse addItem(UUID cartId, CartItemRequest request) {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
-        Product product = productRepository.findById(request.getProductId())
+        BooksMetadata product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
-        Inventory inventory = inventoryRepository.findByProductProductId(request.getProductId())
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
-
-        if (inventory.getQuantity() < request.getQuantity()) {
-            throw new BusinessException("Insufficient stock");
-        }
+        boolean isDigital = "digital".equals(product.getContentType()) || "both".equals(product.getContentType());
 
         CartItem item = cartItemRepository
                 .findByCartCartIdAndProductProductId(cartId, request.getProductId())
                 .orElse(CartItem.builder().cart(cart).product(product).quantity(0).build());
 
-        int newQty = item.getQuantity() + request.getQuantity();
-        if (inventory.getQuantity() < newQty) {
-            throw new BusinessException("Insufficient stock for requested quantity");
+        // Digital products: quantity locked to 1
+        int newQty;
+        if (isDigital) {
+            if (item.getCartItemId() != null) {
+                return toResponse(cartRepository.findById(cartId).get()); // already in cart
+            }
+            newQty = 1;
+        } else {
+            newQty = item.getQuantity() + request.getQuantity();
         }
+
         item.setQuantity(newQty);
         item.setUnitPrice(product.getPrice());
         cartItemRepository.save(item);
@@ -85,12 +92,14 @@ public class CartService {
         if (quantity <= 0) {
             cartItemRepository.delete(item);
         } else {
-            Inventory inv = inventoryRepository.findByProductProductId(item.getProduct().getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
-            if (inv.getQuantity() < quantity) {
-                throw new BusinessException("Insufficient stock");
+            boolean isDigital = "digital".equals(item.getProduct().getContentType())
+                    || "both".equals(item.getProduct().getContentType());
+            if (isDigital) {
+                // Digital products are always quantity 1
+                item.setQuantity(1);
+            } else {
+                item.setQuantity(quantity);
             }
-            item.setQuantity(quantity);
             cartItemRepository.save(item);
         }
         return toResponse(cartRepository.findById(cartId).get());
@@ -115,9 +124,7 @@ public class CartService {
     private CartResponse toResponse(Cart cart) {
         List<CartItem> items = cart.getItems() != null ? cart.getItems() : List.of();
         List<CartResponse.CartItemResponse> itemResponses = items.stream().map(i -> {
-            Inventory inv = inventoryRepository
-                    .findByProductProductId(i.getProduct().getProductId()).orElse(null);
-            boolean inStock = inv != null && inv.getQuantity() >= i.getQuantity();
+            boolean inStock = true;
             BigDecimal lineTotal = i.getUnitPrice().multiply(BigDecimal.valueOf(i.getQuantity()));
             return (CartResponse.CartItemResponse) CartResponse.CartItemResponse.builder()
                     .cartItemId(i.getCartItemId())

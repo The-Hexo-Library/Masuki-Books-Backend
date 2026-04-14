@@ -2,10 +2,16 @@ package com.masukibooks.service;
 
 import com.masukibooks.dto.request.CheckoutRequest;
 import com.masukibooks.dto.response.OrderResponse;
-import com.masukibooks.entity.*;
+import com.masukibooks.entity.BooksMetadata;
+import com.masukibooks.entity.Cart;
+import com.masukibooks.entity.CartItem;
+import com.masukibooks.entity.Order;
+import com.masukibooks.entity.OrderItem;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
-import com.masukibooks.repository.*;
+import com.masukibooks.repository.CartRepository;
+import com.masukibooks.repository.OrderItemRepository;
+import com.masukibooks.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,11 +29,6 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
-    private final CartItemRepository cartItemRepository;
-    private final InventoryRepository inventoryRepository;
-    private final AddressRepository addressRepository;
-    private final DiscountCodeRepository discountCodeRepository;
-    private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
 
     @Transactional
@@ -48,47 +48,53 @@ public class OrderService {
         }
 
         BigDecimal subtotal = BigDecimal.ZERO;
+        boolean allDigital = true;
+        boolean hasDigital = false;
+
         for (CartItem item : items) {
-            Inventory inv = inventoryRepository.findByProductProductId(item.getProduct().getProductId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Inventory not found for: " + item.getProduct().getTitle()));
-            if (inv.getQuantity() < item.getQuantity()) {
-                throw new BusinessException("Insufficient stock for: " + item.getProduct().getTitle());
+            BooksMetadata product = item.getProduct();
+            boolean isDigital = "digital".equals(product.getContentType()) || "both".equals(product.getContentType());
+
+            if (isDigital) {
+                hasDigital = true;
+            } else {
+                allDigital = false;
             }
+
             subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
+        String orderType = allDigital ? "digital" : (hasDigital ? "mixed" : "physical");
+
         BigDecimal discountAmount = BigDecimal.ZERO;
-        DiscountCode discountCode = null;
-        if (request.getDiscountCode() != null && !request.getDiscountCode().isBlank()) {
-            discountCode = discountCodeRepository.findByCodeAndIsActiveTrue(request.getDiscountCode())
-                    .orElseThrow(() -> new BusinessException("Invalid discount code"));
-            if (discountCode.getExpiresAt() != null && discountCode.getExpiresAt().isBefore(LocalDateTime.now())) {
-                throw new BusinessException("Discount code has expired");
-            }
-            if (discountCode.getMaxUses() != null && discountCode.getUsedCount() >= discountCode.getMaxUses()) {
-                throw new BusinessException("Discount code usage limit reached");
-            }
-            if (discountCode.getMinOrderAmount() != null
-                    && subtotal.compareTo(discountCode.getMinOrderAmount()) < 0) {
-                throw new BusinessException("Order does not meet minimum amount for discount");
-            }
-            if ("percentage".equals(discountCode.getType())) {
-                discountAmount = subtotal.multiply(discountCode.getValue())
-                        .divide(BigDecimal.valueOf(100));
-            } else {
-                discountAmount = discountCode.getValue().min(subtotal);
-            }
-        }
 
         BigDecimal total = subtotal.subtract(discountAmount);
 
-        Address shippingAddress = addressRepository.findById(request.getShippingAddressId())
-                .orElseThrow(() -> new ResourceNotFoundException("Shipping address not found"));
-        Address billingAddress = request.getBillingAddressId() != null
-                ? addressRepository.findById(request.getBillingAddressId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Billing address not found"))
-                : shippingAddress;
+        // Address handling: required for physical/mixed, optional for digital
+        // Address shippingAddress = null;
+        // Address billingAddress = null;
+
+        // if (!"digital".equals(orderType)) {
+        // if (request.getShippingAddressId() == null) {
+        // throw new BusinessException("Shipping address is required for physical
+        // orders");
+        // }
+        // shippingAddress = addressRepository.findById(request.getShippingAddressId())
+        // .orElseThrow(() -> new ResourceNotFoundException("Shipping address not
+        // found"));
+        // billingAddress = request.getBillingAddressId() != null
+        // ? addressRepository.findById(request.getBillingAddressId())
+        // .orElseThrow(() -> new ResourceNotFoundException("Billing address not
+        // found"))
+        // : shippingAddress;
+        // } else if (request.getShippingAddressId() != null) {
+        // // Allow optional address for digital orders too
+        // shippingAddress =
+        // addressRepository.findById(request.getShippingAddressId()).orElse(null);
+        // billingAddress = request.getBillingAddressId() != null
+        // ? addressRepository.findById(request.getBillingAddressId()).orElse(null)
+        // : shippingAddress;
+        // }
 
         String orderNumber = "ORD-" + System.currentTimeMillis();
 
@@ -96,14 +102,15 @@ public class OrderService {
                 .user(cart.getUser())
                 .guestEmail(request.getGuestEmail())
                 .orderNumber(orderNumber)
-                .shippingAddress(shippingAddress)
-                .billingAddress(billingAddress)
+                .orderType(orderType)
+                // .shippingAddress(shippingAddress)
+                // .billingAddress(billingAddress)
                 .subtotal(subtotal)
                 .discountAmount(discountAmount)
+                // .shippingAmount(shippingAmount)
                 .totalAmount(total)
                 .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
                 .status("pending")
-                .discountCode(discountCode)
                 .build();
 
         order = orderRepository.save(order);
@@ -120,10 +127,6 @@ public class OrderService {
                     .build();
             orderItemRepository.save(orderItem);
 
-            Inventory inv = inventoryRepository
-                    .findByProductProductId(item.getProduct().getProductId()).get();
-            inv.setQuantity(inv.getQuantity() - item.getQuantity());
-            inventoryRepository.save(inv);
         }
 
         cart.setStatus("converted");
@@ -153,15 +156,6 @@ public class OrderService {
         if (!List.of("pending", "confirmed").contains(order.getStatus())) {
             throw new BusinessException("Order cannot be cancelled in status: " + order.getStatus());
         }
-        if (order.getItems() != null) {
-            for (OrderItem item : order.getItems()) {
-                inventoryRepository.findByProductProductId(item.getProduct().getProductId())
-                        .ifPresent(inv -> {
-                            inv.setQuantity(inv.getQuantity() + item.getQuantity());
-                            inventoryRepository.save(inv);
-                        });
-            }
-        }
         order.setStatus("cancelled");
         return toResponse(orderRepository.save(order));
     }
@@ -187,32 +181,35 @@ public class OrderService {
                         .orderItemId(i.getOrderItemId())
                         .productId(i.getProduct().getProductId())
                         .productTitle(i.getProductTitle() != null
-                                ? i.getProductTitle() : i.getProduct().getTitle())
+                                ? i.getProductTitle()
+                                : i.getProduct().getTitle())
                         .quantity(i.getQuantity())
                         .unitPrice(i.getUnitPrice())
                         .totalPrice(i.getTotalPrice())
                         .build()).collect(Collectors.toList());
 
-        OrderResponse.AddressResponse shipping = o.getShippingAddress() == null ? null
-                : OrderResponse.AddressResponse.builder()
-                        .addressId(o.getShippingAddress().getAddressId())
-                        .addressLine1(o.getShippingAddress().getAddressLine1())
-                        .city(o.getShippingAddress().getCity())
-                        .state(o.getShippingAddress().getState())
-                        .zipCode(o.getShippingAddress().getZipCode())
-                        .country(o.getShippingAddress().getCountry())
-                        .build();
+        // OrderResponse.AddressResponse shipping = o.getShippingAddress() == null ?
+        // null
+        // : OrderResponse.AddressResponse.builder()
+        // .addressId(o.getShippingAddress().getAddressId())
+        // .addressLine1(o.getShippingAddress().getAddressLine1())
+        // .city(o.getShippingAddress().getCity())
+        // .state(o.getShippingAddress().getState())
+        // .zipCode(o.getShippingAddress().getZipCode())
+        // .country(o.getShippingAddress().getCountry())
+        // .build();
 
         return OrderResponse.builder()
                 .orderId(o.getOrderId())
                 .orderNumber(o.getOrderNumber())
                 .status(o.getStatus())
+                .orderType(o.getOrderType())
                 .subtotal(o.getSubtotal())
                 .discountAmount(o.getDiscountAmount())
                 .totalAmount(o.getTotalAmount())
                 .currency(o.getCurrency())
                 .guestEmail(o.getGuestEmail())
-                .shippingAddress(shipping)
+                // .shippingAddress(shipping)
                 .items(itemResponses)
                 .createdAt(o.getCreatedAt())
                 .build();

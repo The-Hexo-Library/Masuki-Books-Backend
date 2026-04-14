@@ -28,7 +28,7 @@ public class OrderItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
-    private Product product;
+    private BooksMetadata product;
 
     @Column(name = "product_title", nullable = false, length = 500)
     private String productTitle;  // snapshot

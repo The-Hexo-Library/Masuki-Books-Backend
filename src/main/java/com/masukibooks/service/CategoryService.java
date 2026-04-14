@@ -18,7 +18,12 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     public List<Category> getRootCategories() {
-        return categoryRepository.findByParentCategoryIsNullAndIsActiveTrue();
+        List<Category> roots = categoryRepository.findByParentCategoryIsNull();
+        // Fallback: if no root categories found, return all categories
+        if (roots.isEmpty()) {
+            return categoryRepository.findAll();
+        }
+        return roots;
     }
 
     public List<Category> getChildCategories(UUID parentId) {
@@ -32,7 +37,8 @@ public class CategoryService {
 
     @Transactional
     public Category createCategory(Category category) {
-        if (category.getParentCategory() != null && category.getParentCategory().getCategoryId() != null) {
+        if (category.getParentCategory() != null &&
+                category.getParentCategory().getCategoryId() != null) {
             Category parent = getCategory(category.getParentCategory().getCategoryId());
             category.setParentCategory(parent);
         }
@@ -42,10 +48,14 @@ public class CategoryService {
     @Transactional
     public Category updateCategory(UUID categoryId, Category updates) {
         Category category = getCategory(categoryId);
-        if (updates.getName() != null) category.setName(updates.getName());
-        if (updates.getSlug() != null) category.setSlug(updates.getSlug());
-        if (updates.getDescription() != null) category.setDescription(updates.getDescription());
-        if (updates.getImageUrl() != null) category.setImageUrl(updates.getImageUrl());
+        if (updates.getName() != null)
+            category.setName(updates.getName());
+        if (updates.getSlug() != null)
+            category.setSlug(updates.getSlug());
+        if (updates.getDescription() != null)
+            category.setDescription(updates.getDescription());
+        // if (updates.getImageUrl() != null)
+        // category.setImageUrl(updates.getImageUrl());
         return categoryRepository.save(category);
     }
 
@@ -58,4 +68,5 @@ public class CategoryService {
         }
         categoryRepository.delete(category);
     }
+
 }

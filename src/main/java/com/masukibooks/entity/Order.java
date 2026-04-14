@@ -11,9 +11,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "orders",
-       indexes = @Index(name = "idx_orders_user", columnList = "user_id"))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "orders", indexes = @Index(name = "idx_orders_user", columnList = "user_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Order {
 
     @Id
@@ -32,38 +35,38 @@ public class Order {
     private String orderNumber;
 
     @Column(nullable = false, length = 20)
-    private String status = "pending";
+    private String status;
     // pending, confirmed, packed, shipped, delivered, cancelled, refunded
+
+    @Builder.Default
+    @Column(name = "order_type", length = 20)
+    private String orderType = "physical"; // physical, digital, mixed
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "discount_id")
-    private DiscountCode discountCode;
-
     @Column(name = "discount_amount", precision = 10, scale = 2)
-    private BigDecimal discountAmount = BigDecimal.ZERO;
+    private BigDecimal discountAmount;
 
-    @Column(name = "tax_amount", precision = 10, scale = 2)
-    private BigDecimal taxAmount = BigDecimal.ZERO;
+    // @Column(name = "tax_amount", precision = 10, scale = 2)
+    // private BigDecimal taxAmount;
 
-    @Column(name = "shipping_amount", precision = 10, scale = 2)
-    private BigDecimal shippingAmount = BigDecimal.ZERO;
+    // @Column(name = "shipping_amount", precision = 10, scale = 2)
+    // private BigDecimal shippingAmount;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
     @Column(nullable = false, length = 10)
-    private String currency = "USD";
+    private String currency;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipping_address_id")
-    private Address shippingAddress;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "shipping_address_id")
+    // private Address shippingAddress;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "billing_address_id")
-    private Address billingAddress;
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "billing_address_id")
+    // private Address billingAddress;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
@@ -82,6 +85,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Shipment> shipments;
+    // @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch =
+    // FetchType.LAZY)
+    // private List<Shipment> shipments;
 }

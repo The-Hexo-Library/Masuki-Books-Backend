@@ -1,5 +1,6 @@
 package com.masukibooks.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,7 +12,11 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "categories")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Category {
 
     @Id
@@ -21,9 +26,11 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_category_id")
+    @JsonIgnore
     private Category parentCategory;
 
     @OneToMany(mappedBy = "parentCategory", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Category> subCategories;
 
     @Column(nullable = false, length = 150)
@@ -35,12 +42,17 @@ public class Category {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "image_url", length = 500)
-    private String imageUrl;
+    @Column(columnDefinition = "TEXT")
+    private String collections;
 
+    // @Column(name = "image_url", length = 500)
+    // private String imageUrl;
+
+    @Builder.Default
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder = 0;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -53,5 +65,6 @@ public class Category {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-    private List<Product> products;
+    @JsonIgnore
+    private List<BooksMetadata> products;
 }

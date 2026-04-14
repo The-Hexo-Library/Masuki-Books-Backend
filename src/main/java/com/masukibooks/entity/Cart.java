@@ -10,9 +10,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "carts",
-       indexes = @Index(name = "idx_carts_user", columnList = "user_id"))
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Table(name = "carts", indexes = @Index(name = "idx_carts_user", columnList = "user_id"))
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Cart {
 
     @Id
@@ -28,7 +31,7 @@ public class Cart {
     private String guestToken;
 
     @Column(nullable = false, length = 20)
-    private String status = "active";  // active, converted, abandoned
+    private String status; // active, converted, abandoned
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

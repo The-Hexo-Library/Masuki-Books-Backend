@@ -1,0 +1,13 @@
+.git
+.gitignore
+.mvn
+mvnw
+mvnw.cmd
+README.md
+api-tests
+target
+**/.idea
+**/.vscode
+**/*.iml
+.env
+.env.*
