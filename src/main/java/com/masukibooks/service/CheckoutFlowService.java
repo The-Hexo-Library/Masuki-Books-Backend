@@ -27,9 +27,29 @@ public class CheckoutFlowService {
         OrderResponse order = orderService.checkout(userId, null, checkoutRequest);
         Payment payment = paymentService.initiatePayment(order.getOrderId(), request.getGateway(), request.getPaymentMethod());
 
+        // In the demo flow, treat checkout as paid immediately so purchased books
+        // are unlocked in the private library right away.
+        String gateway = request.getGateway() == null ? "" : request.getGateway().trim().toLowerCase();
+        if (gateway.isBlank() || "demo".equals(gateway)) {
+            String txId = "demo-" + System.currentTimeMillis();
+            payment = paymentService.markPaymentSuccess(order.getOrderId(), txId);
+            order = orderService.getOrder(order.getOrderId());
+        }
+
+        CheckoutFlowResponse.PaymentSummary paymentSummary = CheckoutFlowResponse.PaymentSummary.builder()
+                .paymentId(payment.getPaymentId())
+                .orderId(payment.getOrder() != null ? payment.getOrder().getOrderId() : order.getOrderId())
+                .gateway(payment.getGateway())
+                .paymentMethod(payment.getPaymentMethod())
+                .amount(payment.getAmount())
+                .currency(payment.getCurrency())
+                .status(payment.getStatus())
+                .gatewayTransactionId(payment.getGatewayTransactionId())
+                .build();
+
         return CheckoutFlowResponse.builder()
                 .order(order)
-                .payment(payment)
+                .payment(paymentSummary)
                 .build();
     }
 }

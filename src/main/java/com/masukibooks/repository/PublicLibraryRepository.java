@@ -11,4 +11,5 @@ public interface PublicLibraryRepository extends JpaRepository<PublicLibrary, UU
     List<PublicLibrary> findByVisibilityOrderByCreatedAtDesc(String visibility);
     Optional<PublicLibrary> findByProductProductId(UUID productId);
     long countByVisibility(String visibility);
+    void deleteByProductProductId(UUID productId);
 }

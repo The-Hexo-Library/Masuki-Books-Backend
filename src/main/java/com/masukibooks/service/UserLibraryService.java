@@ -28,6 +28,7 @@ public class UserLibraryService {
     private final BooksMetadataRepository productRepository;
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
+    private final BookStorageService bookStorageService;
 
     public Page<LibraryResponse> getUserLibrary(UUID userId, String status, String accessType, Pageable pageable) {
         Page<UserLibrary> records;
@@ -132,6 +133,7 @@ public class UserLibraryService {
                 .title(product.getTitle())
                 .author(product.getAuthor())
                 // .coverImageUrl(coverImageUrl)
+                    .fileUrl(bookStorageService.resolvePublicUrl(product.getFileKey()))
                 .fileFormat(product.getFileFormat())
                 .accessType(record.getAccessType())
                 .acquiredAt(record.getAcquiredAt())

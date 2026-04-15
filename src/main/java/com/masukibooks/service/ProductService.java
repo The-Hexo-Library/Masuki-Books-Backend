@@ -8,8 +8,11 @@ import com.masukibooks.entity.PublicLibrary;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.BooksMetadataRepository;
+import com.masukibooks.repository.CartItemRepository;
 import com.masukibooks.repository.CategoryRepository;
+import com.masukibooks.repository.OrderItemRepository;
 import com.masukibooks.repository.PublicLibraryRepository;
+import com.masukibooks.repository.UserLibraryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +31,11 @@ public class ProductService {
     private final BooksMetadataRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final PublicLibraryRepository publicLibraryRepository;
+    private final UserLibraryRepository userLibraryRepository;
+    private final CartItemRepository cartItemRepository;
+    private final OrderItemRepository orderItemRepository;
     private final BookStorageService bookStorageService;
+    private final SupabaseCatalogService supabaseCatalogService;
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(String keyword, UUID categoryId,
@@ -161,8 +168,18 @@ public class ProductService {
     public void deleteProduct(UUID productId) {
         BooksMetadata product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-        product.setStatus("inactive");
-        productRepository.save(product);
+
+        // Remove stored assets first so files are not orphaned in storage.
+        bookStorageService.deleteBookAssets(product.getProductId(), product.getFileKey());
+
+        // Clear dependent references before removing the product.
+        publicLibraryRepository.deleteByProductProductId(productId);
+        userLibraryRepository.deleteByProductProductId(productId);
+        cartItemRepository.deleteByProductProductId(productId);
+        orderItemRepository.clearProductReference(productId);
+        supabaseCatalogService.deleteBookCatalogRow(productId);
+
+        productRepository.delete(product);
     }
 
     @Transactional

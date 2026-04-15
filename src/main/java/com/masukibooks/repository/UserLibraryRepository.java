@@ -24,4 +24,6 @@ public interface UserLibraryRepository extends JpaRepository<UserLibrary, UUID> 
     boolean existsByUserUserIdAndProductProductIdAndStatusIn(UUID userId, UUID productId, List<String> statuses);
 
     long countByUserUserIdAndStatus(UUID userId, String status);
+
+    void deleteByProductProductId(UUID productId);
 }
