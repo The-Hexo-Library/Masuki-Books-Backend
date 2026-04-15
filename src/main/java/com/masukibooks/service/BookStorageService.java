@@ -135,7 +135,16 @@ public class BookStorageService {
     }
 
     public String resolvePublicUrl(String objectKey) {
-        if (isBlank(objectKey) || isBlank(publicUrlPrefix)) {
+        if (isBlank(objectKey)) {
+            return null;
+        }
+
+        String normalizedExternal = normalizeExternalUrl(objectKey);
+        if (normalizedExternal != null) {
+            return normalizedExternal;
+        }
+
+        if (isBlank(publicUrlPrefix)) {
             return null;
         }
 
@@ -204,5 +213,32 @@ public class BookStorageService {
         if (isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
             throw new BusinessException("S3 storage is not configured. Set storage.s3 endpoint, access-key, secret-key, and bucket.");
         }
+    }
+
+    private String normalizeExternalUrl(String value) {
+        if (isBlank(value)) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+        String lower = trimmed.toLowerCase();
+
+        if (lower.startsWith("http://") || lower.startsWith("https://")) {
+            return trimmed;
+        }
+
+        if (trimmed.startsWith("//")) {
+            return "https:" + trimmed;
+        }
+
+        if (lower.startsWith("www.")) {
+            return "https://" + trimmed;
+        }
+
+        if (trimmed.matches("^[a-zA-Z0-9-]+(?:\\.[a-zA-Z0-9-]+)+(?:/.*)?$")) {
+            return "https://" + trimmed;
+        }
+
+        return null;
     }
 }
