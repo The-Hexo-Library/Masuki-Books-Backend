@@ -14,6 +14,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -111,6 +112,23 @@ public class BookStorageService {
         } catch (Exception ex) {
             log.error("Unexpected file storage error for product {}", productId, ex);
             throw new BusinessException("Failed to upload book file to S3 bucket.");
+        }
+    }
+
+    public void deleteBookAssets(UUID productId, String fileKey) {
+        if (productId == null || isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
+            return;
+        }
+
+        String metadataKey = buildMetadataKey(productId);
+        try (S3Client client = buildClient()) {
+            deleteObjectQuietly(client, metadataKey);
+            if (!isBlank(fileKey) && !metadataKey.equals(fileKey)) {
+                deleteObjectQuietly(client, fileKey);
+            }
+        } catch (Exception ex) {
+            log.error("Unexpected file storage error while deleting assets for product {}", productId, ex);
+            throw new BusinessException("Failed to delete book assets from storage.");
         }
     }
 
@@ -212,6 +230,22 @@ public class BookStorageService {
     private void validateStorageConfig() {
         if (isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
             throw new BusinessException("S3 storage is not configured. Set storage.s3 endpoint, access-key, secret-key, and bucket.");
+        }
+    }
+
+    private void deleteObjectQuietly(S3Client client, String objectKey) {
+        if (isBlank(objectKey)) {
+            return;
+        }
+        try {
+            DeleteObjectRequest request = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .build();
+            client.deleteObject(request);
+        } catch (S3Exception ex) {
+            log.warn("S3 delete failed for key {}: {}", objectKey,
+                    ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage());
         }
     }
 

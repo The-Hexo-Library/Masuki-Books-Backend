@@ -5,6 +5,7 @@ import com.masukibooks.entity.OrderItem;
 import com.masukibooks.entity.Payment;
 import com.masukibooks.entity.BooksMetadata;
 import com.masukibooks.exception.ResourceNotFoundException;
+import com.masukibooks.repository.OrderItemRepository;
 import com.masukibooks.repository.OrderRepository;
 import com.masukibooks.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
     private final UserLibraryService userLibraryService;
 
     @Transactional
@@ -60,14 +62,18 @@ public class PaymentService {
     private void unlockDigitalContent(Order order) {
         if (order.getUser() == null) return;
 
-        String orderType = order.getOrderType();
-        if (!"digital".equals(orderType) && !"mixed".equals(orderType)) return;
+        var items = orderItemRepository.findByOrderOrderId(order.getOrderId());
+        if (items == null || items.isEmpty()) return;
 
-        if (order.getItems() == null) return;
-
-        for (OrderItem item : order.getItems()) {
+        for (OrderItem item : items) {
             BooksMetadata product = item.getProduct();
-            if ("digital".equals(product.getContentType()) || "both".equals(product.getContentType())) {
+            if (product == null) {
+                continue;
+            }
+            String contentType = product.getContentType();
+            if (contentType == null || contentType.isBlank()
+                    || "digital".equalsIgnoreCase(contentType)
+                    || "both".equalsIgnoreCase(contentType)) {
                 try {
                     userLibraryService.addToLibrary(
                             order.getUser().getUserId(),

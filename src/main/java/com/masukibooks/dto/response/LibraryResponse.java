@@ -14,6 +14,7 @@ public class LibraryResponse {
     private String title;
     private String author;
     private String coverImageUrl;
+    private String fileUrl;
     private String fileFormat;
     private String accessType;
     private LocalDateTime acquiredAt;
