@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
+                    .requestMatchers("/", "/error").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                     .requestMatchers("/api/subscriptions/plans").permitAll()
                         .requestMatchers("/api/library/public").permitAll()
