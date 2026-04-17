@@ -1,0 +1,52 @@
+# Development Configuration
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    username: ${DATABASE_USERNAME:postgres.bbrxdsaojiqdgrdyghih}
+    password: ${DATABASE_PASSWORD:r2yEdxF3Ath8t9Jt}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 10000
+      validation-timeout: 5000
+      initialization-fail-timeout: 15000
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-create/update tables in dev
+    show-sql: true
+
+  flyway:
+    enabled: false
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your_email@gmail.com
+    password: your_app_password
+
+logging:
+  level:
+    com.masukibooks: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+app:
+  frontend-url:  http://localhost:5173/
+
+storage:
+  s3:
+    endpoint: https://bbrxdsaojiqdgrdyghih.storage.supabase.co/storage/v1/s3
+    region: ap-northeast-2
+    access-key: 14a78994b664f0690dd6737c3d70b385
+    secret-key: 6ebbe0ee2d5ca7d4358f99f1fcf1386d8592520d92c767f973aeac0d5fd9870d
+    bucket: books
+    max-file-size: 52428800
+    public-url-prefix: https://bbrxdsaojiqdgrdyghih.supabase.co/storage/v1/object/public/books

@@ -1,0 +1,86 @@
+# Compiled class files
+*.class
+target/
+build/
+
+# Log files
+*.log
+logs/
+
+# Package Files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# IDE Files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.DS_Store
+nbproject/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Application Configuration (with sensitive data)
+application-local.yml
+application-secrets.yml
+
+# Database
+*.db
+*.sqlite
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# Testing
+test-output/
+coverage/
+
+# Temporary Files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Node modules (if using any frontend tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Application specific
+uploads/
+temp/
+cache/

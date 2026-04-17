@@ -1,0 +1,44 @@
+﻿[INFO] Error stacktraces are turned on.
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------< com.masukibooks:masukibooks-backend >-----------------
+[INFO] Building masukibooks-backend 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.3.5:run (default-cli) > test-compile @ masukibooks-backend >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ masukibooks-backend ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ masukibooks-backend ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ masukibooks-backend ---
+[INFO] skip non existing resourceDirectory C:\Users\Sarvesh B\Desktop\DD\Demo\Masuki-Books-Backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ masukibooks-backend ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:3.3.5:run (default-cli) < test-compile @ masukibooks-backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.3.5:run (default-cli) @ masukibooks-backend ---
+[INFO] Attaching agents: []
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.5)
+
+2026-04-15 20:44:15 - Starting MasukibooksApplication using Java 22.0.2 with PID 18496 (C:\Users\Sarvesh B\Desktop\DD\Demo\Masuki-Books-Backend\target\classes started by Sarvesh B in C:\Users\Sarvesh B\Desktop\DD\Demo\Masuki-Books-Backend)
+2026-04-15 20:44:15 - Running with Spring Boot v3.3.5, Spring v6.1.14
+2026-04-15 20:44:15 - The following 1 profile is active: "dev"
+2026-04-15 20:44:18 - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-15 20:44:18 - Finished Spring Data repository scanning in 235 ms. Found 11 JPA repository interfaces.

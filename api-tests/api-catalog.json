@@ -1,0 +1,36 @@
+{
+  "baseUrl": "http://localhost:8081",
+  "authHeader": "Authorization: Bearer <JWT_TOKEN>",
+  "endpoints": [
+    { "method": "POST", "path": "/auth/register", "auth": "public", "payloadFile": "api-tests/payloads/auth-register.json" },
+    { "method": "POST", "path": "/auth/login", "auth": "public", "payloadFile": "api-tests/payloads/auth-login.json" },
+    { "method": "POST", "path": "/auth/admin/login", "auth": "public", "payloadFile": "api-tests/payloads/auth-admin-login.json" },
+
+    { "method": "GET", "path": "/user/categories", "auth": "user/admin" },
+    { "method": "GET", "path": "/user/cart", "auth": "user/admin" },
+    { "method": "POST", "path": "/user/cart/items", "auth": "user/admin", "payloadFile": "api-tests/payloads/user-cart-add-item.json" },
+    { "method": "PUT", "path": "/user/cart/items/{cartItemId}", "auth": "user/admin", "payloadFile": "api-tests/payloads/user-cart-update-item.json" },
+    { "method": "DELETE", "path": "/user/cart/items/{cartItemId}", "auth": "user/admin" },
+    { "method": "GET", "path": "/user/orders", "auth": "user/admin" },
+    { "method": "POST", "path": "/user/checkout", "auth": "user/admin", "payloadFile": "api-tests/payloads/user-checkout.json" },
+    { "method": "GET", "path": "/user/subscriptions/plans", "auth": "user/admin" },
+    { "method": "POST", "path": "/user/subscriptions/activate", "auth": "user/admin", "payloadFile": "api-tests/payloads/user-subscription-activate.json" },
+    { "method": "GET", "path": "/user/subscriptions/me", "auth": "user/admin" },
+    { "method": "GET", "path": "/user/public-library", "auth": "user/admin" },
+    { "method": "GET", "path": "/user/library", "auth": "user/admin" },
+    { "method": "POST", "path": "/user/library/{bookId}", "auth": "user/admin", "payloadFile": "api-tests/payloads/user-library-add.json" },
+    { "method": "DELETE", "path": "/user/library/{bookId}", "auth": "user/admin" },
+
+    { "method": "GET", "path": "/admin/users", "auth": "admin" },
+    { "method": "POST", "path": "/admin/books", "auth": "admin", "payloadFile": "api-tests/payloads/admin-book-create.json" },
+    { "method": "PUT", "path": "/admin/books/{bookId}", "auth": "admin", "payloadFile": "api-tests/payloads/admin-book-update.json" },
+    { "method": "DELETE", "path": "/admin/books/{bookId}", "auth": "admin" },
+    { "method": "POST", "path": "/admin/categories", "auth": "admin", "payloadFile": "api-tests/payloads/admin-category-create.json" },
+    { "method": "PUT", "path": "/admin/categories/{categoryId}", "auth": "admin", "payloadFile": "api-tests/payloads/admin-category-update.json" },
+    { "method": "DELETE", "path": "/admin/categories/{categoryId}", "auth": "admin" },
+    { "method": "GET", "path": "/admin/public-library", "auth": "admin" },
+    { "method": "POST", "path": "/admin/public-library", "auth": "admin", "payloadFile": "api-tests/payloads/admin-public-library-upsert.json" },
+    { "method": "DELETE", "path": "/admin/public-library/{publicLibraryId}", "auth": "admin" },
+    { "method": "POST", "path": "/admin/subscriptions/plans", "auth": "admin", "payloadFile": "api-tests/payloads/admin-subscription-plan-create.json" }
+  ]
+}

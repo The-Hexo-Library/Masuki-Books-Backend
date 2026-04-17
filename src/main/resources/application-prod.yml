@@ -1,0 +1,58 @@
+# Production Configuration (Supabase)
+# Set environment variables in your deployment platform:
+# - DATABASE_URL: Your Supabase connection string
+# - DATABASE_USERNAME: postgres.[your-project-ref]
+# - DATABASE_PASSWORD: Your Supabase database password
+# - JWT_SECRET: A secure random string (min 64 characters)
+# - MAIL_USERNAME, MAIL_PASSWORD: Your email credentials
+# - FRONTEND_URL: Your production frontend URL
+
+spring:
+  datasource:
+    # Supabase connection string format:
+    # jdbc:postgresql://db.[your-project-ref].supabase.co:5432/postgres
+    url: ${DATABASE_URL:jdbc:postgresql://db.bbrxdsaojiqdgrdyghih.supabase.co:5432/postgres?sslmode=require}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Never auto-modify production schema
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+
+logging:
+  level:
+    com.masukibooks: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:false}  # Disable in production
+  swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:false}  # Disable in production
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: 86400000
+    refresh-expiration-ms: 604800000
+  
+  otp:
+    expiry-minutes: 10
+  
+  frontend-url: ${FRONTEND_URL}
