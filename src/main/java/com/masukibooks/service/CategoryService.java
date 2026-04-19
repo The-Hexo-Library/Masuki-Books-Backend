@@ -5,17 +5,20 @@ import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final BookStorageService bookStorageService;
 
     public List<Category> getRootCategories() {
         List<Category> roots = categoryRepository.findByParentCategoryIsNull();
@@ -42,12 +45,19 @@ public class CategoryService {
             Category parent = getCategory(category.getParentCategory().getCategoryId());
             category.setParentCategory(parent);
         }
-        return categoryRepository.save(category);
+        Category saved = categoryRepository.save(category);
+
+        // Create corresponding folder in S3 bucket
+        bookStorageService.createCategoryFolder(saved.getName());
+
+        return saved;
     }
 
     @Transactional
     public Category updateCategory(UUID categoryId, Category updates) {
         Category category = getCategory(categoryId);
+        String oldName = category.getName();
+
         if (updates.getName() != null)
             category.setName(updates.getName());
         if (updates.getSlug() != null)
@@ -56,7 +66,17 @@ public class CategoryService {
             category.setDescription(updates.getDescription());
         // if (updates.getImageUrl() != null)
         // category.setImageUrl(updates.getImageUrl());
-        return categoryRepository.save(category);
+
+        Category saved = categoryRepository.save(category);
+
+        // If category name changed, delete old folder and create new one
+        if (updates.getName() != null && !updates.getName().equals(oldName)) {
+            log.info("Category renamed from '{}' to '{}' — updating S3 folder", oldName, updates.getName());
+            bookStorageService.deleteCategoryFolder(oldName);
+            bookStorageService.createCategoryFolder(updates.getName());
+        }
+
+        return saved;
     }
 
     @Transactional
@@ -66,6 +86,10 @@ public class CategoryService {
         if (!children.isEmpty()) {
             throw new BusinessException("Cannot delete category with subcategories");
         }
+
+        // Delete the corresponding S3 folder and all its contents
+        bookStorageService.deleteCategoryFolder(category.getName());
+
         categoryRepository.delete(category);
     }
 

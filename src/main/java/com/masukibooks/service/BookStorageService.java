@@ -16,8 +16,11 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.S3Configuration;
 
@@ -29,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -91,6 +95,106 @@ public class BookStorageService {
             log.error("Unexpected storage error for product {}", product.getProductId(), ex);
             throw new BusinessException("Failed to upload book metadata to S3 bucket: " + ex.getMessage());
         }
+    }
+
+    /**
+     * Create a category folder (zero-byte placeholder) in the S3 bucket.
+     * S3 simulates folders via trailing-slash keys.
+     */
+    public void createCategoryFolder(String categoryName) {
+        if (isBlank(categoryName)) {
+            log.warn("Cannot create S3 folder for blank category name.");
+            return;
+        }
+        if (isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
+            log.warn("S3 not configured — skipping category folder creation for '{}'", categoryName);
+            return;
+        }
+
+        String folderKey = sanitizeName(categoryName) + "/";
+        try (S3Client client = buildClient()) {
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(folderKey)
+                    .contentType("application/x-directory")
+                    .build();
+            client.putObject(request, RequestBody.empty());
+            log.info("Created S3 category folder: {}", folderKey);
+        } catch (S3Exception ex) {
+            String errorMsg = ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage();
+            log.error("Failed to create S3 category folder '{}': {}", folderKey, errorMsg);
+        } catch (Exception ex) {
+            log.error("Unexpected error creating S3 category folder '{}'", folderKey, ex);
+        }
+    }
+
+    /**
+     * Delete a category folder and ALL objects under it from the S3 bucket.
+     */
+    public void deleteCategoryFolder(String categoryName) {
+        if (isBlank(categoryName)) {
+            return;
+        }
+        if (isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
+            return;
+        }
+
+        String prefix = sanitizeName(categoryName) + "/";
+        try (S3Client client = buildClient()) {
+            // List all objects under this category prefix
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(bucket)
+                    .prefix(prefix)
+                    .build();
+
+            ListObjectsV2Response listResponse = client.listObjectsV2(listRequest);
+            List<S3Object> objects = listResponse.contents();
+
+            // Delete each object under the prefix
+            for (S3Object obj : objects) {
+                deleteObjectQuietly(client, obj.key());
+            }
+
+            // Handle pagination if there are many objects
+            while (listResponse.isTruncated()) {
+                listRequest = ListObjectsV2Request.builder()
+                        .bucket(bucket)
+                        .prefix(prefix)
+                        .continuationToken(listResponse.nextContinuationToken())
+                        .build();
+                listResponse = client.listObjectsV2(listRequest);
+                for (S3Object obj : listResponse.contents()) {
+                    deleteObjectQuietly(client, obj.key());
+                }
+            }
+
+            log.info("Deleted S3 category folder and contents: {}", prefix);
+        } catch (S3Exception ex) {
+            String errorMsg = ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage();
+            log.error("Failed to delete S3 category folder '{}': {}", prefix, errorMsg);
+        } catch (Exception ex) {
+            log.error("Unexpected error deleting S3 category folder '{}'", prefix, ex);
+        }
+    }
+
+    /**
+     * Ensure all provided category names have a corresponding folder in the S3 bucket.
+     */
+    public void syncCategoryFolders(List<String> categoryNames) {
+        if (categoryNames == null || categoryNames.isEmpty()) {
+            return;
+        }
+        if (isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
+            log.warn("S3 not configured — skipping category folder sync.");
+            return;
+        }
+
+        for (String name : categoryNames) {
+            if (!isBlank(name)) {
+                createCategoryFolder(name);
+            }
+        }
+        log.info("Synced {} category folders to S3 bucket.", categoryNames.size());
     }
 
     public String uploadBookFile(BooksMetadata product, MultipartFile file) {
@@ -234,11 +338,13 @@ public class BookStorageService {
     }
 
     private String buildMetadataKey(BooksMetadata product) {
+        String safeCategory = sanitizeName(product.getCategory() != null ? product.getCategory().getName() : "general");
         String safeTitle = sanitizeName(product.getTitle());
-        return safeTitle + "/" + safeTitle + "-metadata.json";
+        return safeCategory + "/" + safeTitle + "/" + safeTitle + "-metadata.json";
     }
 
     private String buildFileKey(BooksMetadata product, String originalFilename) {
+        String safeCategory = sanitizeName(product.getCategory() != null ? product.getCategory().getName() : "general");
         String safeTitle = sanitizeName(product.getTitle());
         String extension = "pdf";
         if (originalFilename != null) {
@@ -247,7 +353,7 @@ public class BookStorageService {
                 extension = originalFilename.substring(dotIdx + 1).toLowerCase();
             }
         }
-        return safeTitle + "/" + safeTitle + "." + extension;
+        return safeCategory + "/" + safeTitle + "/" + safeTitle + "." + extension;
     }
 
     public String sanitizeName(String name) {
