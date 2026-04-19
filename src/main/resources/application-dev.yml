@@ -47,6 +47,6 @@ storage:
     region: ap-northeast-2
     access-key: 14a78994b664f0690dd6737c3d70b385
     secret-key: 6ebbe0ee2d5ca7d4358f99f1fcf1386d8592520d92c767f973aeac0d5fd9870d
-    bucket: books
+    bucket: Test_bucket
     max-file-size: 52428800
-    public-url-prefix: https://bbrxdsaojiqdgrdyghih.supabase.co/storage/v1/object/public/books
+    public-url-prefix: https://bbrxdsaojiqdgrdyghih.storage.supabase.co/storage/v1/s3/public/Test_bucket

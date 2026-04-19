@@ -61,6 +61,16 @@ public class ProductService {
     }
 
     @Transactional
+    public ProductResponse createProductWithFile(ProductRequest request, MultipartFile pdfFile) {
+        ProductResponse baseResponse = createProduct(request);
+        
+        if (pdfFile != null && !pdfFile.isEmpty()) {
+            return uploadBookFile(baseResponse.getProductId(), pdfFile);
+        }
+        
+        return baseResponse;
+    }
+
     public ProductResponse createProduct(ProductRequest request) {
         Category category = categoryRepository.findById(UUID.fromString(request.getCategoryId()))
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
@@ -99,7 +109,7 @@ public class ProductService {
                 saved.setFileFormat("flipbook");
             } else {
                 BookStorageService.ImportedBookFile imported = bookStorageService.importBookFileFromUrl(
-                        saved.getProductId(),
+                        saved,
                         externalFileUrl,
                         request.getFileFormat());
                 saved.setFileKey(imported.fileKey());
@@ -187,7 +197,7 @@ public class ProductService {
                 product.setFileFormat("flipbook");
             } else {
                 BookStorageService.ImportedBookFile imported = bookStorageService.importBookFileFromUrl(
-                        product.getProductId(),
+                        product,
                         externalFileUrl,
                         request.getFileFormat());
                 product.setFileKey(imported.fileKey());
@@ -213,7 +223,7 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
         // Remove stored assets first so files are not orphaned in storage.
-        bookStorageService.deleteBookAssets(product.getProductId(), product.getFileKey());
+        bookStorageService.deleteBookAssets(product);
 
         // Clear dependent references before removing the product.
         publicLibraryRepository.deleteByProductProductId(productId);
@@ -234,7 +244,7 @@ public class ProductService {
             throw new BusinessException("Book file is required.");
         }
 
-        String fileKey = bookStorageService.uploadBookFile(productId, file);
+        String fileKey = bookStorageService.uploadBookFile(product, file);
         product.setFileKey(fileKey);
         product.setFileSizeBytes(file.getSize());
 
@@ -248,6 +258,10 @@ public class ProductService {
         }
 
         BooksMetadata saved = productRepository.save(product);
+
+        // Re-upload metadata JSON so it reflects the updated file info
+        bookStorageService.uploadBookMetadata(saved);
+
         ensurePublicVisibility(saved);
         return toResponse(saved);
     }

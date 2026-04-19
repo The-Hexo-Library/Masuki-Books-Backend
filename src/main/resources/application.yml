@@ -58,10 +58,10 @@ storage:
     region: ${S3_REGION:ap-northeast-2}
     access-key: ${S3_ACCESS_KEY:}
     secret-key: ${S3_SECRET_KEY:}
-    bucket: ${S3_BUCKET:books}
+    bucket: ${S3_BUCKET:Test_bucket}
     object-key-prefix: ${S3_OBJECT_KEY_PREFIX:storage/manage/books}
     max-file-size: ${S3_MAX_FILE_SIZE:52428800}
-    public-url-prefix: ${S3_PUBLIC_URL_PREFIX:https://bbrxdsaojiqdgrdyghih.supabase.co/storage/v1/object/public/books}
+    public-url-prefix: ${S3_PUBLIC_URL_PREFIX:https://bbrxdsaojiqdgrdyghih.supabase.co/storage/v1/s3/public/test_bucket}
 
 app:
   jwt:

@@ -36,6 +36,7 @@ public class AdminEbookController {
     private final OrderService orderService;
     private final PublicLibraryService publicLibraryService;
     private final SubscriptionService subscriptionService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @GetMapping("/users")
     @PreAuthorize("hasRole('ADMIN')")
@@ -43,10 +44,33 @@ public class AdminEbookController {
         return ResponseEntity.ok(ApiResponse.success("Users retrieved", userService.listUsers(pageable)));
     }
 
-    @PostMapping("/books")
+    @PostMapping(value = "/books", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> createBook(@Valid @RequestBody ProductRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Book metadata created", productService.createProduct(request)));
+    }
+
+    @PostMapping(value = "/books", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ProductResponse>> createBookWithFile(
+            @RequestPart(value = "request", required = false) ProductRequest request,
+            @RequestParam(value = "requestJson", required = false) String requestJson,
+            @RequestPart(value = "file", required = false) MultipartFile pdfFile) {
+        
+        ProductRequest finalRequest = request;
+        if (finalRequest == null && requestJson != null) {
+            try {
+                finalRequest = objectMapper.readValue(requestJson, ProductRequest.class);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid JSON format in requestJson field: " + e.getMessage());
+            }
+        }
+        
+        if (finalRequest == null) {
+            throw new IllegalArgumentException("Request metadata is required");
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Book created", productService.createProductWithFile(finalRequest, pdfFile)));
     }
 
     @GetMapping("/books")
@@ -121,10 +145,34 @@ public class AdminEbookController {
         return ResponseEntity.ok(ApiResponse.success("Public library records retrieved", publicLibraryService.listPublicItems()));
     }
 
-    @PostMapping("/public-library")
+    @PostMapping(value = "/public-library", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PublicLibraryResponse>> upsertPublicLibrary(@Valid @RequestBody PublicLibraryRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Public library record saved", publicLibraryService.createOrUpdate(request)));
+    }
+
+    @PostMapping(value = "/public-library", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PublicLibraryResponse>> upsertPublicLibraryWithFile(
+            @RequestPart(value = "request", required = false) PublicLibraryRequest request,
+            @RequestParam(value = "requestJson", required = false) String requestJson,
+            @RequestPart(value = "file", required = false) MultipartFile pdfFile) {
+
+        PublicLibraryRequest finalRequest = request;
+
+        if (finalRequest == null && requestJson != null) {
+            try {
+                finalRequest = objectMapper.readValue(requestJson, PublicLibraryRequest.class);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid JSON format in requestJson field: " + e.getMessage());
+            }
+        }
+
+        if (finalRequest == null) {
+            throw new IllegalArgumentException("Request metadata is required");
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Public library record saved", publicLibraryService.createOrUpdateWithFile(finalRequest, pdfFile)));
     }
 
     @DeleteMapping("/public-library/{publicLibraryId}")

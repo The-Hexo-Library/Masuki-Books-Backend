@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -52,7 +53,7 @@ public class BookStorageService {
     @Value("${storage.s3.secret-key:}")
     private String secretKey;
 
-    @Value("${storage.s3.bucket:books}")
+    @Value("${storage.s3.bucket:Test_bucket}")
     private String bucket;
 
     @Value("${storage.s3.object-key-prefix:storage/manage/books}")
@@ -70,7 +71,7 @@ public class BookStorageService {
             throw new BusinessException("S3 storage is not configured. Set storage.s3 endpoint, access-key, secret-key, and bucket.");
         }
 
-        String objectKey = buildMetadataKey(product.getProductId());
+        String objectKey = buildMetadataKey(product);
         String payload = toJsonPayload(product);
 
         try (S3Client client = buildClient()) {
@@ -83,24 +84,25 @@ public class BookStorageService {
             client.putObject(request, RequestBody.fromString(payload));
             return objectKey;
         } catch (S3Exception ex) {
-            log.error("S3 upload failed for product {}: {}", product.getProductId(), ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage());
-            throw new BusinessException("Failed to upload book metadata to S3 bucket.");
+            String errorMsg = ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage();
+            log.error("S3 upload failed for product {}: {}", product.getProductId(), errorMsg);
+            throw new BusinessException("Failed to upload book metadata to S3 bucket: " + errorMsg);
         } catch (Exception ex) {
             log.error("Unexpected storage error for product {}", product.getProductId(), ex);
-            throw new BusinessException("Failed to upload book metadata to S3 bucket.");
+            throw new BusinessException("Failed to upload book metadata to S3 bucket: " + ex.getMessage());
         }
     }
 
-    public String uploadBookFile(UUID productId, MultipartFile file) {
-        if (productId == null) {
-            throw new BusinessException("Product id is required for file upload.");
+    public String uploadBookFile(BooksMetadata product, MultipartFile file) {
+        if (product == null || product.getProductId() == null) {
+            throw new BusinessException("Product is required for file upload.");
         }
         if (file == null || file.isEmpty()) {
             throw new BusinessException("Book file is required.");
         }
         validateStorageConfig();
 
-        String objectKey = buildFileKey(productId, file.getOriginalFilename());
+        String objectKey = buildFileKey(product, file.getOriginalFilename());
         String contentType = resolveContentType(file);
 
         try (S3Client client = buildClient()) {
@@ -113,18 +115,20 @@ public class BookStorageService {
             client.putObject(request, RequestBody.fromBytes(file.getBytes()));
             return objectKey;
         } catch (S3Exception ex) {
-            log.error("S3 file upload failed for product {}: {}", productId, ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage());
-            throw new BusinessException("Failed to upload book file to S3 bucket.");
+            String errorMsg = ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage();
+            log.error("S3 file upload failed for product {}: {}", product.getProductId(), errorMsg);
+            throw new BusinessException("Failed to upload book file to S3 bucket: " + errorMsg);
         } catch (IOException ex) {
-            throw new BusinessException("Failed to read uploaded book file.");
+            throw new BusinessException("Failed to read uploaded book file: " + ex.getMessage());  
         } catch (Exception ex) {
-            log.error("Unexpected file storage error for product {}", productId, ex);
-            throw new BusinessException("Failed to upload book file to S3 bucket.");
+            log.error("Unexpected file storage error for product {}", product.getProductId(), ex);
+            throw new BusinessException("Failed to upload book file to S3 bucket: " + ex.getMessage());
         }
     }
 
-    public ImportedBookFile importBookFileFromUrl(UUID productId, String sourceUrl, String preferredFormat) {
-        if (productId == null) {
+    @Transactional(readOnly = true)
+    public ImportedBookFile importBookFileFromUrl(BooksMetadata product, String sourceUrl, String preferredFormat) {
+        if (product == null) {
             throw new BusinessException("Product id is required for file import.");
         }
         if (isBlank(sourceUrl)) {
@@ -172,7 +176,7 @@ public class BookStorageService {
             String contentType = response.headers().firstValue("Content-Type").orElse("application/octet-stream");
             String fileFormat = resolveRemoteFormat(sourceUri, preferredFormat, contentType);
             String filename = "book-file." + fileFormat;
-            String objectKey = buildFileKey(productId, filename);
+            String objectKey = buildFileKey(product, filename);
 
             try (S3Client s3Client = buildClient()) {
                 PutObjectRequest putRequest = PutObjectRequest.builder()
@@ -193,28 +197,29 @@ public class BookStorageService {
             Thread.currentThread().interrupt();
             throw new BusinessException("Book URL import was interrupted.");
         } catch (S3Exception ex) {
-            log.error("S3 import upload failed for product {}: {}", productId,
+            log.error("S3 import upload failed for product {}: {}", product.getProductId(),  
                     ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage());
             throw new BusinessException("Failed to store imported book file in S3.");
         } catch (Exception ex) {
-            log.error("Unexpected URL import error for product {}", productId, ex);
+            log.error("Unexpected URL import error for product {}", product.getProductId(), ex);
             throw new BusinessException("Failed to import book file from URL.");
         }
     }
 
-    public void deleteBookAssets(UUID productId, String fileKey) {
-        if (productId == null || isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
+    public void deleteBookAssets(BooksMetadata product) {
+        if (product == null || product.getProductId() == null || isBlank(endpoint) || isBlank(accessKey) || isBlank(secretKey) || isBlank(bucket)) {
             return;
         }
 
-        String metadataKey = buildMetadataKey(productId);
+        String metadataKey = buildMetadataKey(product);
+        String fileKey = product.getFileKey();
         try (S3Client client = buildClient()) {
             deleteObjectQuietly(client, metadataKey);
             if (!isBlank(fileKey) && !metadataKey.equals(fileKey)) {
                 deleteObjectQuietly(client, fileKey);
             }
         } catch (Exception ex) {
-            log.error("Unexpected file storage error while deleting assets for product {}", productId, ex);
+            log.error("Unexpected file storage error while deleting assets for product {}", product.getProductId(), ex);
             throw new BusinessException("Failed to delete book assets from storage.");
         }
     }
@@ -228,15 +233,26 @@ public class BookStorageService {
                 .build();
     }
 
-    private String buildMetadataKey(UUID productId) {
-        return cleanPrefix(objectKeyPrefix) + "/" + productId + "/metadata.json";
+    private String buildMetadataKey(BooksMetadata product) {
+        String safeTitle = sanitizeName(product.getTitle());
+        return safeTitle + "/" + safeTitle + "-metadata.json";
     }
 
-    private String buildFileKey(UUID productId, String originalFilename) {
-        String safeName = (originalFilename == null || originalFilename.isBlank())
-                ? "book-file"
-                : originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_");
-        return cleanPrefix(objectKeyPrefix) + "/" + productId + "/files/" + UUID.randomUUID() + "-" + safeName;
+    private String buildFileKey(BooksMetadata product, String originalFilename) {
+        String safeTitle = sanitizeName(product.getTitle());
+        String extension = "pdf";
+        if (originalFilename != null) {
+            int dotIdx = originalFilename.lastIndexOf('.');
+            if (dotIdx >= 0 && dotIdx < originalFilename.length() - 1) {
+                extension = originalFilename.substring(dotIdx + 1).toLowerCase();
+            }
+        }
+        return safeTitle + "/" + safeTitle + "." + extension;
+    }
+
+    public String sanitizeName(String name) {
+        if (name == null) return "unknown";
+        return name.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("-+", "-");
     }
 
     public String resolvePublicUrl(String objectKey) {
@@ -304,6 +320,14 @@ public class BookStorageService {
         payload.put("compareAtPrice", product.getCompareAtPrice());
         payload.put("status", product.getStatus());
         payload.put("contentType", product.getContentType());
+        payload.put("categoryName", product.getCategory() != null ? product.getCategory().getName() : null);
+        payload.put("fileKey", product.getFileKey());
+        payload.put("fileFormat", product.getFileFormat());
+        payload.put("fileSizeBytes", product.getFileSizeBytes());
+        payload.put("totalPages", product.getTotalPages());
+        payload.put("previewPages", product.getPreviewPages());
+        payload.put("downloadable", product.getDownloadable());
+        payload.put("maxDownloads", product.getMaxDownloads());
         payload.put("createdAt", product.getCreatedAt());
         payload.put("updatedAt", product.getUpdatedAt());
 
