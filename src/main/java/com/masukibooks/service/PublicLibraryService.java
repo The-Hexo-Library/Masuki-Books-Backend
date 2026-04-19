@@ -10,6 +10,7 @@ import com.masukibooks.repository.PublicLibraryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class PublicLibraryService {
     private final PublicLibraryRepository publicLibraryRepository;
     private final BooksMetadataRepository productRepository;
     private final BookStorageService bookStorageService;
+    private final PublicLibraryStorageService publicLibraryStorageService;
 
     public List<PublicLibraryResponse> listPublicItems() {
         return publicLibraryRepository.findByVisibilityOrderByCreatedAtDesc("public")
@@ -36,6 +38,11 @@ public class PublicLibraryService {
 
     @Transactional
     public PublicLibraryResponse createOrUpdate(PublicLibraryRequest request) {
+        return createOrUpdateWithFile(request, null);
+    }
+
+    @Transactional
+    public PublicLibraryResponse createOrUpdateWithFile(PublicLibraryRequest request, MultipartFile pdfFile) {
         BooksMetadata product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Book metadata not found"));
 
@@ -55,23 +62,40 @@ public class PublicLibraryService {
             record.setEditable(request.getEditable());
         }
 
-        return toResponse(publicLibraryRepository.save(record));
+        PublicLibrary savedRecord = publicLibraryRepository.save(record);
+
+        // Trigger S3 operations if a file is provided
+        if (pdfFile != null && !pdfFile.isEmpty()) {
+            publicLibraryStorageService.uploadBook(product.getTitle(), pdfFile, product);
+        }
+
+        return toResponse(savedRecord);
     }
 
     @Transactional
     public void delete(UUID id) {
         PublicLibrary record = publicLibraryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Public library record not found"));
+        
+        // Trigger S3 deletion
+        publicLibraryStorageService.deleteBook(record.getProduct().getTitle());
+        
         publicLibraryRepository.delete(record);
     }
 
     private PublicLibraryResponse toResponse(PublicLibrary record) {
+        String pdfUrl = publicLibraryStorageService.getBookPdfUrl(record.getProduct().getTitle());
+        // Fallback to general storage service if public library URL fails/is missing
+        if (pdfUrl == null) {
+            pdfUrl = bookStorageService.resolvePublicUrl(record.getProduct().getFileKey());
+        }
+
         return PublicLibraryResponse.builder()
                 .publicLibraryId(record.getPublicLibraryId())
                 .productId(record.getProduct().getProductId())
                 .title(record.getProduct().getTitle())
                 .author(record.getProduct().getAuthor())
-            .fileUrl(bookStorageService.resolvePublicUrl(record.getProduct().getFileKey()))
+                .fileUrl(pdfUrl)
                 .visibility(record.getVisibility())
                 .isFeatured(record.getIsFeatured())
                 .notes(record.getNotes())

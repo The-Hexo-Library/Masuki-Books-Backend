@@ -1,7 +1,4 @@
 {
-  "productId": "11111111-1111-1111-1111-111111111111",
-  "isFeatured": true,
-  "visibility": "public",
-  "notes": "Highlighted on homepage",
-  "editable": true
+    "bookId": 1,
+    "availableCopies": 5
 }

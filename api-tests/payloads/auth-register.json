@@ -1,10 +1,7 @@
 {
-  "email": "john.reader@example.com",
-  "phoneNumber": "19876543210",
-  "password": "Password@123",
-  "firstName": "John",
-  "lastName": "Reader",
-  "profession": "Student",
-  "preferredLanguage": "en",
-  "piiConsent": true
+    "email": "user@example.com",
+    "password": "password123",
+    "name": "Test User",
+    "phoneNumber": "1234567890",
+    "address": "123 Main St"
 }

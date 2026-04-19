@@ -1,6 +1,4 @@
 {
-  "description": "Engineering, software and architecture books",
-  "collections": "core,featured,2026",
-  "displayOrder": 2,
-  "isActive": true
+    "name": "Updated Category",
+    "description": "Updated Description"
 }

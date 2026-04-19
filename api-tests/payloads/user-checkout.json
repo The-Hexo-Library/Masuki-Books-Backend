@@ -1,6 +1,5 @@
 {
-  "discountCode": null,
-  "currency": "INR",
-  "gateway": "razorpay",
-  "paymentMethod": "card"
+    "paymentMethod": "CREDIT_CARD",
+    "address": "123 Main St",
+    "phoneNumber": "1234567890"
 }
