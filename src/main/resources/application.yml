@@ -6,9 +6,9 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/masukibooks}
-    username: ${DATABASE_USERNAME:postgres}
-    password: ${DATABASE_PASSWORD:postgres}
+    url: ${DATABASE_URL:jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    username: ${DATABASE_USERNAME:postgres.bbrxdsaojiqdgrdyghih}
+    password: ${DATABASE_PASSWORD:r2yEdxF3Ath8t9Jt}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: ${DB_POOL_SIZE:10}
@@ -79,7 +79,7 @@ app:
   otp:
     expiry-minutes: ${OTP_EXPIRY_MINUTES:10}
 
-  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  frontend-url: ${FRONTEND_URL:https://masuki-books-frontend.onrender.com}
 
 springdoc:
   api-docs:

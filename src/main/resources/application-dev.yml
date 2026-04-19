@@ -39,7 +39,7 @@ springdoc:
     enabled: true
 
 app:
-  frontend-url:  http://localhost:5173/
+  frontend-url: https://masuki-books-frontend.onrender.com
 
 storage:
   s3:
