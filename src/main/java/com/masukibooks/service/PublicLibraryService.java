@@ -154,16 +154,24 @@ public class PublicLibraryService {
             pdfUrl = bookStorageService.resolvePublicUrl(record.getProduct().getFileKey());
         }
 
+        BooksMetadata product = record.getProduct();
+        String categoryName = null;
+        if (product.getCategory() != null) {
+            categoryName = product.getCategory().getName();
+        }
+
         return PublicLibraryResponse.builder()
                 .publicLibraryId(record.getPublicLibraryId())
-                .productId(record.getProduct().getProductId())
-                .title(record.getProduct().getTitle())
-                .author(record.getProduct().getAuthor())
+                .productId(product.getProductId())
+                .title(product.getTitle())
+                .author(product.getAuthor())
                 .fileUrl(pdfUrl)
                 .visibility(record.getVisibility())
                 .isFeatured(record.getIsFeatured())
                 .notes(record.getNotes())
                 .editable(record.getEditable())
+                .categoryName(categoryName)
+                .price(product.getPrice())
                 .build();
     }
 }

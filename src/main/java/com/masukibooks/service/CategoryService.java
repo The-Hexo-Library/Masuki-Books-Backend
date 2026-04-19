@@ -1,6 +1,7 @@
 package com.masukibooks.service;
 
 import com.masukibooks.entity.Category;
+import com.masukibooks.dto.response.CategoryResponse;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.exception.ResourceNotFoundException;
 import com.masukibooks.repository.CategoryRepository;
@@ -9,8 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -91,6 +92,29 @@ public class CategoryService {
         bookStorageService.deleteCategoryFolder(category.getName());
 
         categoryRepository.delete(category);
+    }
+
+    public List<CategoryResponse> getCategoriesWithBookCount() {
+        List<Category> categories = getRootCategories();
+        Map<UUID, Long> countMap = new HashMap<>();
+        for (Object[] row : categoryRepository.countBooksByCategory()) {
+            UUID catId = (UUID) row[0];
+            Long count = (Long) row[1];
+            countMap.put(catId, count);
+        }
+        return categories.stream()
+                .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
+                .sorted(Comparator.comparingInt(c -> c.getDisplayOrder() != null ? c.getDisplayOrder() : 0))
+                .map(c -> CategoryResponse.builder()
+                        .categoryId(c.getCategoryId())
+                        .name(c.getName())
+                        .slug(c.getSlug())
+                        .description(c.getDescription())
+                        .displayOrder(c.getDisplayOrder())
+                        .isActive(c.getIsActive())
+                        .bookCount(countMap.getOrDefault(c.getCategoryId(), 0L))
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }

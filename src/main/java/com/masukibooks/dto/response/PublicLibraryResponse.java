@@ -3,6 +3,7 @@ package com.masukibooks.dto.response;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -17,4 +18,6 @@ public class PublicLibraryResponse {
     private Boolean isFeatured;
     private String notes;
     private Boolean editable;
+    private String categoryName;
+    private BigDecimal price;
 }
