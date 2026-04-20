@@ -175,6 +175,15 @@ public class OrderService {
         return toResponse(orderRepository.save(order));
     }
 
+    @Transactional
+    public void updateOrderWalletDeduction(UUID orderId, BigDecimal walletAmountUsed, BigDecimal newTotal) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        order.setDiscountAmount(walletAmountUsed);
+        order.setTotalAmount(newTotal);
+        orderRepository.save(order);
+    }
+
     private OrderResponse toResponse(Order o) {
         List<OrderResponse.OrderItemResponse> itemResponses = o.getItems() == null ? List.of()
                 : o.getItems().stream().map(i -> OrderResponse.OrderItemResponse.builder()

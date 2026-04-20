@@ -3,6 +3,7 @@ package com.masukibooks.service;
 import com.masukibooks.dto.request.SubscriptionPlanRequest;
 import com.masukibooks.dto.response.SubscriptionResponse;
 import com.masukibooks.dto.response.SubscriptionStatusResponse;
+import com.masukibooks.dto.response.WalletResponse;
 import com.masukibooks.entity.Subscription;
 import com.masukibooks.entity.SubscriptionStatus;
 import com.masukibooks.entity.User;
@@ -167,6 +168,70 @@ public class SubscriptionService {
         return toResponse(subscriptionRepository.save(activeSubscription));
     }
 
+    /**
+     * Purchase a wallet-credit plan: adds the plan's price to the user's wallet balance.
+     * Users can purchase any plan any number of times.
+     */
+    @Transactional
+    public WalletResponse purchaseWalletPlan(UUID userId, UUID planId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Subscription plan = subscriptionRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("Subscription plan not found"));
+
+        BigDecimal amount = plan.getPrice();
+        BigDecimal currentBalance = user.getWalletBalance() != null ? user.getWalletBalance() : BigDecimal.ZERO;
+        BigDecimal newBalance = currentBalance.add(amount);
+        user.setWalletBalance(newBalance);
+        userRepository.save(user);
+
+        // Record the purchase as a subscription record for history tracking
+        Subscription purchaseRecord = Subscription.builder()
+                .planName(plan.getPlanName())
+                .description("Wallet top-up: " + plan.getPlanName())
+                .price(plan.getPrice())
+                .durationDays(0)
+                .isPlan(false)
+                .user(user)
+                .status(SubscriptionStatus.ACTIVE)
+                .startedAt(LocalDateTime.now())
+                .autoRenew(false)
+                .isActive(true)
+                .build();
+        subscriptionRepository.save(purchaseRecord);
+
+        return WalletResponse.builder()
+                .balance(newBalance)
+                .amountAdded(amount)
+                .message("Successfully added " + amount + " to wallet. New balance: " + newBalance)
+                .build();
+    }
+
+    /**
+     * Get the current wallet balance for a user.
+     */
+    public BigDecimal getWalletBalance(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return user.getWalletBalance() != null ? user.getWalletBalance() : BigDecimal.ZERO;
+    }
+
+    /**
+     * Deduct an amount from the user's wallet. Returns the actual amount deducted.
+     */
+    @Transactional
+    public BigDecimal deductFromWallet(UUID userId, BigDecimal amount) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        BigDecimal currentBalance = user.getWalletBalance() != null ? user.getWalletBalance() : BigDecimal.ZERO;
+        BigDecimal deduction = amount.min(currentBalance);
+        user.setWalletBalance(currentBalance.subtract(deduction));
+        userRepository.save(user);
+        return deduction;
+    }
+
     public List<SubscriptionResponse> getUserSubscriptions(UUID userId) {
         return subscriptionRepository.findByUserUserIdOrderByCreatedAtDesc(userId)
                 .stream()
@@ -207,9 +272,9 @@ public class SubscriptionService {
 
         List<Subscription> defaults = List.of(
                 Subscription.builder()
-                        .planName("Starter 10%")
-                        .description("Access to 10% of private library books")
-                        .price(BigDecimal.valueOf(199))
+                        .planName("Starter $25")
+                        .description("Add $25 to your wallet balance. Use it to purchase books during checkout.")
+                        .price(BigDecimal.valueOf(25))
                         .durationDays(365)
                         .isPlan(true)
                         .status(SubscriptionStatus.ACTIVE)
@@ -217,9 +282,9 @@ public class SubscriptionService {
                         .autoRenew(false)
                         .build(),
                 Subscription.builder()
-                        .planName("Basic 25%")
-                        .description("Access to 25% of private library books")
-                        .price(BigDecimal.valueOf(399))
+                        .planName("Plus $50")
+                        .description("Add $50 to your wallet balance. Best value for regular readers.")
+                        .price(BigDecimal.valueOf(50))
                         .durationDays(365)
                         .isPlan(true)
                         .status(SubscriptionStatus.ACTIVE)
@@ -227,19 +292,9 @@ public class SubscriptionService {
                         .autoRenew(false)
                         .build(),
                 Subscription.builder()
-                        .planName("Pro 50%")
-                        .description("Access to 50% of private library books")
-                        .price(BigDecimal.valueOf(699))
-                        .durationDays(365)
-                        .isPlan(true)
-                        .status(SubscriptionStatus.ACTIVE)
-                        .isActive(true)
-                        .autoRenew(false)
-                        .build(),
-                Subscription.builder()
-                        .planName("Premium 100%")
-                        .description("Full private library access")
-                        .price(BigDecimal.valueOf(999))
+                        .planName("Premium $100")
+                        .description("Add $100 to your wallet balance. Maximum savings for avid collectors.")
+                        .price(BigDecimal.valueOf(100))
                         .durationDays(365)
                         .isPlan(true)
                         .status(SubscriptionStatus.ACTIVE)

@@ -120,6 +120,27 @@ public class UserEbookController {
                 subscriptionService.getUserSubscriptions(user.getUserId())));
     }
 
+    @GetMapping("/wallet")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<ApiResponse<com.masukibooks.dto.response.WalletResponse>> getWallet(@AuthenticationPrincipal User user) {
+        java.math.BigDecimal balance = subscriptionService.getWalletBalance(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("Wallet balance retrieved",
+                com.masukibooks.dto.response.WalletResponse.builder()
+                        .balance(balance)
+                        .amountAdded(java.math.BigDecimal.ZERO)
+                        .message("Current wallet balance")
+                        .build()));
+    }
+
+    @PostMapping("/wallet/topup")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<ApiResponse<com.masukibooks.dto.response.WalletResponse>> topUpWallet(
+            @AuthenticationPrincipal User user,
+            @Valid @RequestBody ActivateSubscriptionRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Wallet topped up successfully",
+                subscriptionService.purchaseWalletPlan(user.getUserId(), request.getSubscriptionPlanId())));
+    }
+
     @GetMapping("/public-library")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ApiResponse<List<PublicLibraryResponse>>> publicLibrary() {

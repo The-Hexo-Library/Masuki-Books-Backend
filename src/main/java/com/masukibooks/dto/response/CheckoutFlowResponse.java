@@ -11,6 +11,8 @@ import java.util.UUID;
 public class CheckoutFlowResponse {
     private OrderResponse order;
     private PaymentSummary payment;
+    private BigDecimal walletAmountUsed;
+    private BigDecimal walletBalanceAfter;
 
     @Getter
     @Builder

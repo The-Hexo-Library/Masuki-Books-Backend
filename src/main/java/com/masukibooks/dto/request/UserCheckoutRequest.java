@@ -16,4 +16,6 @@ public class UserCheckoutRequest {
 
     @NotBlank
     private String paymentMethod;
+
+    private boolean useWallet;
 }

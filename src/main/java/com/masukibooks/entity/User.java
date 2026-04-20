@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -80,6 +81,10 @@ public class User {
     // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch =
     // FetchType.LAZY)
     // private List<Address> addresses;
+
+    @Builder.Default
+    @Column(name = "wallet_balance", nullable = false, precision = 10, scale = 2, columnDefinition = "numeric(10,2) default 0.00")
+    private BigDecimal walletBalance = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private List<UserLibrary> library;
