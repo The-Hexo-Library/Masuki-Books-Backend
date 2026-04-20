@@ -39,11 +39,18 @@ public class SupabaseCatalogService {
 
         deleteBookCatalogRowFromDatabase(productId);
 
+        String identifierColumn = resolveIdentifierColumn();
+        if (identifierColumn == null) {
+            log.warn("Skipping Supabase catalog REST delete for product {} because no identifier column was found", productId);
+            return;
+        }
+
         String base = trimTrailingSlash(supabaseUrl);
         String table = isBlank(booksTable) ? "books" : booksTable.trim();
         String encodedTable = URLEncoder.encode(table, StandardCharsets.UTF_8);
+        String encodedColumn = URLEncoder.encode(identifierColumn, StandardCharsets.UTF_8);
         String encodedId = URLEncoder.encode(productId.toString(), StandardCharsets.UTF_8);
-        String requestUrl = base + "/rest/v1/" + encodedTable + "?id=eq." + encodedId;
+        String requestUrl = base + "/rest/v1/" + encodedTable + "?" + encodedColumn + "=eq." + encodedId;
 
         HttpRequest request = HttpRequest.newBuilder(URI.create(requestUrl))
                 .timeout(Duration.ofSeconds(10))
@@ -113,6 +120,24 @@ public class SupabaseCatalogService {
         } catch (Exception ex) {
             log.warn("Supabase catalog DB delete failed for product {}: {}", productId, ex.getMessage());
         }
+    }
+
+    private String resolveIdentifierColumn() {
+        String table = normalizedTableName(booksTable);
+        if (table == null) {
+            return null;
+        }
+
+        if (hasColumn(table, "id")) {
+            return "id";
+        }
+        if (hasColumn(table, "product_id")) {
+            return "product_id";
+        }
+        if (hasColumn(table, "book_id")) {
+            return "book_id";
+        }
+        return null;
     }
 
     private boolean hasColumn(String table, String column) {
