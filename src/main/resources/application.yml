@@ -79,7 +79,7 @@ app:
   otp:
     expiry-minutes: ${OTP_EXPIRY_MINUTES:10}
 
-  frontend-url: ${FRONTEND_URL:https://masuki-books-frontend.onrender.com}
+  frontend-url: ${FRONTEND_URL:https://www.masukibooks.com/}
 
 springdoc:
   api-docs:
