@@ -91,6 +91,9 @@ public class CartService {
         }
         if (quantity <= 0) {
             cartItemRepository.delete(item);
+            if (item.getCart() != null && item.getCart().getItems() != null) {
+                item.getCart().getItems().removeIf(i -> i.getCartItemId().equals(cartItemId));
+            }
         } else {
             boolean isDigital = "digital".equals(item.getProduct().getContentType())
                     || "both".equals(item.getProduct().getContentType());
@@ -113,6 +116,9 @@ public class CartService {
             throw new BusinessException("Item does not belong to this cart");
         }
         cartItemRepository.delete(item);
+        if (item.getCart() != null && item.getCart().getItems() != null) {
+            item.getCart().getItems().removeIf(i -> i.getCartItemId().equals(cartItemId));
+        }
         return toResponse(cartRepository.findById(cartId).get());
     }
 
