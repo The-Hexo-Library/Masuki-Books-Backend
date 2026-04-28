@@ -13,6 +13,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findByParentCategoryCategoryIdAndIsActiveTrue(UUID parentId);
     List<Category> findByParentCategoryIsNull();
 
-    @Query("SELECT c.categoryId, COUNT(b) FROM Category c LEFT JOIN c.products b GROUP BY c.categoryId")
+    @Query("SELECT c.categoryId, COUNT(b.productId) FROM Category c LEFT JOIN c.products b GROUP BY c.categoryId")
     List<Object[]> countBooksByCategory();
 }

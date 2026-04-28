@@ -317,10 +317,46 @@ public class BookStorageService {
 
         String metadataKey = buildMetadataKey(product);
         String fileKey = product.getFileKey();
+
+        // Compute the book folder prefix (e.g. "category-name/book-title/")
+        String safeCategory = sanitizeName(product.getCategory() != null ? product.getCategory().getName() : "general");
+        String safeTitle = sanitizeName(product.getTitle());
+        String bookFolderPrefix = safeCategory + "/" + safeTitle + "/";
+
         try (S3Client client = buildClient()) {
+            // First delete explicitly known keys
             deleteObjectQuietly(client, metadataKey);
-            if (!isBlank(fileKey) && !metadataKey.equals(fileKey)) {
+            if (!isBlank(fileKey) && !metadataKey.equals(fileKey) && !isExternalUrl(fileKey)) {
                 deleteObjectQuietly(client, fileKey);
+            }
+
+            // Then delete ALL remaining objects under the book folder prefix
+            try {
+                ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                        .bucket(bucket)
+                        .prefix(bookFolderPrefix)
+                        .build();
+
+                ListObjectsV2Response listResponse = client.listObjectsV2(listRequest);
+                for (S3Object obj : listResponse.contents()) {
+                    deleteObjectQuietly(client, obj.key());
+                }
+
+                while (listResponse.isTruncated()) {
+                    listRequest = ListObjectsV2Request.builder()
+                            .bucket(bucket)
+                            .prefix(bookFolderPrefix)
+                            .continuationToken(listResponse.nextContinuationToken())
+                            .build();
+                    listResponse = client.listObjectsV2(listRequest);
+                    for (S3Object obj : listResponse.contents()) {
+                        deleteObjectQuietly(client, obj.key());
+                    }
+                }
+                log.info("Deleted S3 book folder and all contents: {}", bookFolderPrefix);
+            } catch (S3Exception ex) {
+                log.warn("Failed to list/delete book folder prefix '{}': {}", bookFolderPrefix,
+                        ex.awsErrorDetails() != null ? ex.awsErrorDetails().errorMessage() : ex.getMessage());
             }
         } catch (Exception ex) {
             log.error("Unexpected file storage error while deleting assets for product {}", product.getProductId(), ex);
