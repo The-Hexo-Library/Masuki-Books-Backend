@@ -4,6 +4,7 @@ import com.masukibooks.dto.request.PublicLibraryRequest;
 import com.masukibooks.dto.request.SubscriptionPlanRequest;
 import com.masukibooks.dto.request.ProductRequest;
 import com.masukibooks.dto.response.ApiResponse;
+import com.masukibooks.dto.response.CategoryResponse;
 import com.masukibooks.dto.response.ProductResponse;
 import com.masukibooks.dto.response.PublicLibraryResponse;
 import com.masukibooks.dto.response.SubscriptionResponse;
@@ -120,6 +121,20 @@ public class AdminEbookController {
     public ResponseEntity<ApiResponse<Void>> deleteCategory(@PathVariable UUID categoryId) {
         categoryService.deleteCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.success("Category deleted", null));
+    }
+
+    @GetMapping("/categories/with-books")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> listCategoriesWithBooks() {
+        List<CategoryResponse> dtos = categoryService.getRootCategoriesWithBooks().stream().map(c -> CategoryResponse.builder()
+                .categoryId(c.getCategoryId())
+                .name(c.getName())
+                .slug(c.getSlug())
+                .description(c.getDescription())
+                .displayOrder(c.getDisplayOrder())
+                .isActive(c.getIsActive())
+                .build()).toList();
+        return ResponseEntity.ok(ApiResponse.success("Categories retrieved", dtos));
     }
 
     @GetMapping("/orders")

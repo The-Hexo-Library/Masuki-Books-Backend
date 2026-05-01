@@ -3,6 +3,7 @@ package com.masukibooks.controller;
 import com.masukibooks.dto.request.*;
 import com.masukibooks.dto.response.*;
 import com.masukibooks.entity.User;
+import com.masukibooks.entity.UserRole;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.service.*;
 import jakarta.validation.Valid;
@@ -41,8 +42,11 @@ public class UserEbookController {
 
     @GetMapping("/categories")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public ResponseEntity<ApiResponse<List<CategoryResponse>>> categories() {
-        List<CategoryResponse> dtos = categoryService.getRootCategories().stream().map(c -> CategoryResponse.builder()
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> categories(@AuthenticationPrincipal User user) {
+        boolean adminUser = user != null && UserRole.ADMIN.equals(user.getRole());
+        List<CategoryResponse> dtos = (adminUser
+                ? categoryService.getRootCategoriesWithBooks()
+                : categoryService.getRootCategories()).stream().map(c -> CategoryResponse.builder()
                 .categoryId(c.getCategoryId())
                 .name(c.getName())
                 .slug(c.getSlug())

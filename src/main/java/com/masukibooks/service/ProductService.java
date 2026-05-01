@@ -221,6 +221,7 @@ public class ProductService {
     public void deleteProduct(UUID productId) {
         BooksMetadata product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        Category category = product.getCategory();
 
         // Remove stored assets first so files are not orphaned in storage.
         bookStorageService.deleteBookAssets(product);
@@ -233,6 +234,12 @@ public class ProductService {
         supabaseCatalogService.deleteBookCatalogRow(productId);
 
         productRepository.delete(product);
+
+        if (category != null && category.getCategoryId() != null
+                && productRepository.countByCategoryCategoryId(category.getCategoryId()) == 0) {
+            bookStorageService.deleteCategoryFolder(category.getName());
+            categoryRepository.deleteById(category.getCategoryId());
+        }
     }
 
     @Transactional

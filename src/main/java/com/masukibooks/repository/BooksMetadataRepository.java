@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface BooksMetadataRepository extends JpaRepository<BooksMetadata, UUID> {
     Optional<BooksMetadata> findBySku(String sku);
     Optional<BooksMetadata> findByIsbn(String isbn);
+    long countByCategoryCategoryId(UUID categoryId);
 
     Page<BooksMetadata> findByCategoryCategoryIdAndStatus(UUID categoryId, String status, Pageable pageable);
 

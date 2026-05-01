@@ -30,6 +30,22 @@ public class CategoryService {
         return roots;
     }
 
+    public List<Category> getRootCategoriesWithBooks() {
+        List<Category> roots = getRootCategories();
+        Map<UUID, Long> countMap = new HashMap<>();
+        for (Object[] row : categoryRepository.countBooksByCategory()) {
+            UUID catId = (UUID) row[0];
+            Long count = (Long) row[1];
+            countMap.put(catId, count);
+        }
+
+        return roots.stream()
+                .filter(c -> Boolean.TRUE.equals(c.getIsActive()))
+                .filter(c -> countMap.getOrDefault(c.getCategoryId(), 0L) > 0)
+                .sorted(Comparator.comparingInt(c -> c.getDisplayOrder() != null ? c.getDisplayOrder() : 0))
+                .collect(Collectors.toList());
+    }
+
     public List<Category> getChildCategories(UUID parentId) {
         return categoryRepository.findByParentCategoryCategoryIdAndIsActiveTrue(parentId);
     }
@@ -47,9 +63,6 @@ public class CategoryService {
             category.setParentCategory(parent);
         }
         Category saved = categoryRepository.save(category);
-
-        // Create corresponding folder in S3 bucket
-        bookStorageService.createCategoryFolder(saved.getName());
 
         return saved;
     }
@@ -74,7 +87,6 @@ public class CategoryService {
         if (updates.getName() != null && !updates.getName().equals(oldName)) {
             log.info("Category renamed from '{}' to '{}' — updating S3 folder", oldName, updates.getName());
             bookStorageService.deleteCategoryFolder(oldName);
-            bookStorageService.createCategoryFolder(updates.getName());
         }
 
         return saved;
