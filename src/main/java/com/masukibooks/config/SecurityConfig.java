@@ -48,14 +48,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public endpoints (use explicit /** to avoid accidental static resource resolution)
                         .requestMatchers("/auth/**").permitAll()
-                    .requestMatchers("/api/subscriptions/plans").permitAll()
-                        .requestMatchers("/api/library/public").permitAll()
+                        .requestMatchers("/api/subscriptions/plans/**").permitAll()
                         .requestMatchers("/api/library/public/**").permitAll()
-                        .requestMatchers("/api/categories").permitAll()
-                        .requestMatchers("/api/contact").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/api-docs/**").permitAll()
+                        .requestMatchers("/api/categories/**").permitAll()
+                        .requestMatchers("/api/contact/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "MODERATOR")
                         .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "SUPER_ADMIN", "MODERATOR")
@@ -76,6 +75,9 @@ public class SecurityConfig {
         }
         allowedOrigins.add("http://localhost:5173");
         allowedOrigins.add("http://127.0.0.1:5173");
+        // Additional local dev port used by some setups
+        allowedOrigins.add("http://localhost:1573");
+        allowedOrigins.add("http://127.0.0.1:1573");
 
         if (extraAllowedOrigins != null && !extraAllowedOrigins.isBlank()) {
             for (String origin : extraAllowedOrigins.split(",")) {
