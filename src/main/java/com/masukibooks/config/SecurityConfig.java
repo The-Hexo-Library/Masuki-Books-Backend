@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints (use explicit /** to avoid accidental static resource resolution)
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/webhook/razorpay").permitAll()
                         .requestMatchers("/api/subscriptions/plans/**").permitAll()
                         .requestMatchers("/api/library/public/**").permitAll()
                         .requestMatchers("/api/categories/**").permitAll()

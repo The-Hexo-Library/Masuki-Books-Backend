@@ -36,9 +36,11 @@ public class OrderService {
         Cart cart;
         if (userId != null) {
             cart = cartRepository.findByUserUserIdAndStatus(userId, "active")
+                    .or(() -> cartRepository.findByUserUserIdAndStatus(userId, "checkout_pending"))
                     .orElseThrow(() -> new ResourceNotFoundException("Active cart not found"));
         } else {
             cart = cartRepository.findByGuestTokenAndStatus(guestToken, "active")
+                    .or(() -> cartRepository.findByGuestTokenAndStatus(guestToken, "checkout_pending"))
                     .orElseThrow(() -> new ResourceNotFoundException("Active cart not found"));
         }
 
@@ -129,7 +131,7 @@ public class OrderService {
 
         }
 
-        cart.setStatus("converted");
+        cart.setStatus("checkout_pending");
         cartRepository.save(cart);
 
         return toResponse(orderRepository.findById(orderId).get());

@@ -5,6 +5,7 @@ import com.masukibooks.entity.OrderItem;
 import com.masukibooks.entity.Payment;
 import com.masukibooks.entity.BooksMetadata;
 import com.masukibooks.exception.ResourceNotFoundException;
+import com.masukibooks.repository.CartRepository;
 import com.masukibooks.repository.OrderItemRepository;
 import com.masukibooks.repository.OrderRepository;
 import com.masukibooks.repository.PaymentRepository;
@@ -23,6 +24,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final CartRepository cartRepository;
     private final UserLibraryService userLibraryService;
 
     @Transactional
@@ -46,9 +48,16 @@ public class PaymentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         Payment payment = paymentRepository.findTopByOrderOrderIdOrderByCreatedAtDesc(order.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
-        payment.setGatewayTransactionId(gatewayTransactionId);
         payment.setStatus("success");
+        if (gatewayTransactionId != null && gatewayTransactionId.startsWith("pay_")) {
+            payment.setGatewayPaymentId(gatewayTransactionId);
+        } else if (payment.getGatewayTransactionId() == null || payment.getGatewayTransactionId().isBlank()) {
+            payment.setGatewayTransactionId(gatewayTransactionId);
+        }
         order.setStatus("confirmed");
+        order.setPaymentStatus("paid");
+        order.setPaidAt(java.time.LocalDateTime.now());
+        finalizePaidCart(order);
         unlockDigitalContent(order);
         orderRepository.save(order);
         return paymentRepository.save(payment);
@@ -57,6 +66,17 @@ public class PaymentService {
     public Payment getPaymentByOrder(UUID orderId) {
         return paymentRepository.findTopByOrderOrderIdOrderByCreatedAtDesc(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found for order"));
+    }
+
+    private void finalizePaidCart(Order order) {
+        if (order.getUser() == null) {
+            return;
+        }
+        cartRepository.findByUserUserIdAndStatus(order.getUser().getUserId(), "checkout_pending")
+                .ifPresent(cart -> {
+                    cart.setStatus("converted");
+                    cartRepository.save(cart);
+                });
     }
 
     private void unlockDigitalContent(Order order) {

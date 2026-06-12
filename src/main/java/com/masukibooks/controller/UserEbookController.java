@@ -34,6 +34,7 @@ public class UserEbookController {
     private final CartService cartService;
     private final OrderService orderService;
     private final CheckoutFlowService checkoutFlowService;
+    private final RazorpayPaymentService razorpayPaymentService;
     private final SubscriptionService subscriptionService;
     private final PublicLibraryService publicLibraryService;
     private final UserLibraryService userLibraryService;
@@ -100,7 +101,17 @@ public class UserEbookController {
     public ResponseEntity<ApiResponse<CheckoutFlowResponse>> checkout(@AuthenticationPrincipal User user,
             @Valid @RequestBody UserCheckoutRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Checkout completed and payment initiated",
-                checkoutFlowService.checkoutAndInitiate(user.getUserId(), request)));
+            checkoutFlowService.checkoutAndInitiate(user.getUserId(), null, request)));
+    }
+
+    @PostMapping("/checkout/verify")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> verifyCheckout(@Valid @RequestBody RazorpayVerifyRequest request) {
+        razorpayPaymentService.verifyAndCompletePayment(
+                request.getRazorpayOrderId(),
+                request.getRazorpayPaymentId(),
+                request.getRazorpaySignature());
+        return ResponseEntity.ok(ApiResponse.success("Payment verified successfully", null));
     }
 
     @GetMapping("/subscriptions/plans")

@@ -5,6 +5,8 @@ import com.masukibooks.dto.request.UserCheckoutRequest;
 import com.masukibooks.dto.response.CheckoutFlowResponse;
 import com.masukibooks.dto.response.OrderResponse;
 import com.masukibooks.entity.Payment;
+import com.masukibooks.service.RazorpayPaymentService.RazorpayCheckoutDetails;
+import com.razorpay.RazorpayException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,24 +19,27 @@ public class CheckoutFlowService {
 
     private final OrderService orderService;
     private final PaymentService paymentService;
+    private final RazorpayPaymentService razorpayPaymentService;
+    private final com.masukibooks.repository.OrderRepository orderRepository;
 
     @Transactional
-    public CheckoutFlowResponse checkoutAndInitiate(UUID userId, UserCheckoutRequest request) {
+    public CheckoutFlowResponse checkoutAndInitiate(UUID userId, String guestToken, UserCheckoutRequest request) {
         CheckoutRequest checkoutRequest = new CheckoutRequest();
         checkoutRequest.setDiscountCode(request.getDiscountCode());
         checkoutRequest.setCurrency(request.getCurrency());
 
-        OrderResponse order = orderService.checkout(userId, null, checkoutRequest);
-        Payment payment = paymentService.initiatePayment(order.getOrderId(), request.getGateway(), request.getPaymentMethod());
+        OrderResponse order = orderService.checkout(userId, guestToken, checkoutRequest);
+        com.masukibooks.entity.Order orderEntity = orderRepository.findById(order.getOrderId())
+                .orElseThrow(() -> new RuntimeException("Order entity not found for id " + order.getOrderId()));
 
-        // In the demo flow, treat checkout as paid immediately so purchased books
-        // are unlocked in the private library right away.
-        String gateway = request.getGateway() == null ? "" : request.getGateway().trim().toLowerCase();
-        if (gateway.isBlank() || "demo".equals(gateway)) {
-            String txId = "demo-" + System.currentTimeMillis();
-            payment = paymentService.markPaymentSuccess(order.getOrderId(), txId);
-            order = orderService.getOrder(order.getOrderId());
+        RazorpayCheckoutDetails razorpayCheckout;
+        try {
+            razorpayCheckout = razorpayPaymentService.createOrderForCheckout(orderEntity);
+        } catch (RazorpayException ex) {
+            throw new RuntimeException("Failed to create Razorpay order: " + ex.getMessage(), ex);
         }
+
+        Payment payment = paymentService.getPaymentByOrder(order.getOrderId());
 
         CheckoutFlowResponse.PaymentSummary paymentSummary = CheckoutFlowResponse.PaymentSummary.builder()
                 .paymentId(payment.getPaymentId())
@@ -50,6 +55,10 @@ public class CheckoutFlowService {
         return CheckoutFlowResponse.builder()
                 .order(order)
                 .payment(paymentSummary)
+                .publishableKey(razorpayCheckout.keyId())
+                .razorpayOrderId(razorpayCheckout.razorpayOrderId())
+                .amount(razorpayCheckout.amount())
+                .currency(razorpayCheckout.currency())
                 .build();
     }
 }

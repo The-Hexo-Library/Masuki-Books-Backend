@@ -39,6 +39,21 @@ public class Payment {
     @Column(name = "gateway_payment_id", length = 255)
     private String gatewayPaymentId;
 
+    @Column(name = "stripe_payment_intent_id", length = 255)
+    private String stripePaymentIntentId;
+
+    @Column(name = "stripe_charge_id", length = 255)
+    private String stripeChargeId;
+
+    @Column(name = "stripe_event_id", length = 255)
+    private String stripeEventId;
+
+    @Column(name = "stripe_receipt_url", columnDefinition = "TEXT")
+    private String stripeReceiptUrl;
+
+    @Column(name = "failure_code", length = 100)
+    private String failureCode;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 

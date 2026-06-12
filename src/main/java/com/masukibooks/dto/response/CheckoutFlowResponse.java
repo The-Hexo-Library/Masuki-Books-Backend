@@ -11,6 +11,10 @@ import java.util.UUID;
 public class CheckoutFlowResponse {
     private OrderResponse order;
     private PaymentSummary payment;
+    private String publishableKey;
+    private String razorpayOrderId;
+    private Long amount;
+    private String currency;
 
     @Getter
     @Builder
