@@ -41,26 +41,24 @@ public class UserEbookController {
     private final BookStorageService bookStorageService;
 
     @GetMapping("/categories")
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> categories(@AuthenticationPrincipal User user) {
+        // Always return categories WITH book counts.
+        // The frontend filters categories using (bookCount > 0), but non-admin
+        // previously received categories
+        // without bookCount populated, causing categories to render as empty on the
+        // public UI.
         boolean adminUser = user != null && UserRole.ADMIN.equals(user.getRole());
-        List<CategoryResponse> dtos = (adminUser
-                ? categoryService.getRootCategoriesWithBooks()
-                : categoryService.getRootCategories()).stream().map(c -> CategoryResponse.builder()
-                .categoryId(c.getCategoryId())
-                .name(c.getName())
-                .slug(c.getSlug())
-                .description(c.getDescription())
-                .displayOrder(c.getDisplayOrder())
-            .isActive(c.getIsActive())
-                .build()).toList();
+
+        List<CategoryResponse> dtos = categoryService.getCategoriesWithBookCount();
+
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved", dtos));
     }
 
     @GetMapping("/cart")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ApiResponse<CartResponse>> getCart(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(ApiResponse.success("Cart retrieved", cartService.getOrCreateCartForUser(user.getUserId())));
+        return ResponseEntity
+                .ok(ApiResponse.success("Cart retrieved", cartService.getOrCreateCartForUser(user.getUserId())));
     }
 
     @PostMapping("/cart/items")
@@ -77,7 +75,8 @@ public class UserEbookController {
             @PathVariable UUID cartItemId,
             @RequestBody Map<String, Integer> request) {
         UUID cartId = cartService.getOrCreateCartForUser(user.getUserId()).getCartId();
-        return ResponseEntity.ok(ApiResponse.success("Item updated", cartService.updateItem(cartId, cartItemId, request.get("quantity"))));
+        return ResponseEntity.ok(ApiResponse.success("Item updated",
+                cartService.updateItem(cartId, cartItemId, request.get("quantity"))));
     }
 
     @DeleteMapping("/cart/items/{cartItemId}")
@@ -92,7 +91,8 @@ public class UserEbookController {
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> myOrders(@AuthenticationPrincipal User user,
             @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success("Orders retrieved", orderService.getUserOrders(user.getUserId(), pageable)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Orders retrieved", orderService.getUserOrders(user.getUserId(), pageable)));
     }
 
     @PostMapping("/checkout")
@@ -100,13 +100,28 @@ public class UserEbookController {
     public ResponseEntity<ApiResponse<CheckoutFlowResponse>> checkout(@AuthenticationPrincipal User user,
             @Valid @RequestBody UserCheckoutRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Checkout completed and payment initiated",
+<<<<<<< Updated upstream
                 checkoutFlowService.checkoutAndInitiate(user.getUserId(), request)));
+=======
+                checkoutFlowService.checkoutAndInitiate(user.getUserId(), null, request)));
+    }
+
+    @PostMapping("/checkout/verify")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> verifyCheckout(@Valid @RequestBody RazorpayVerifyRequest request) {
+        razorpayPaymentService.verifyAndCompletePayment(
+                request.getRazorpayOrderId(),
+                request.getRazorpayPaymentId(),
+                request.getRazorpaySignature());
+        return ResponseEntity.ok(ApiResponse.success("Payment verified successfully", null));
+>>>>>>> Stashed changes
     }
 
     @GetMapping("/subscriptions/plans")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ApiResponse<List<SubscriptionResponse>>> listPlans() {
-        return ResponseEntity.ok(ApiResponse.success("Subscription plans retrieved", subscriptionService.listAvailablePlans()));
+        return ResponseEntity
+                .ok(ApiResponse.success("Subscription plans retrieved", subscriptionService.listAvailablePlans()));
     }
 
     @PostMapping("/subscriptions/activate")
@@ -127,7 +142,8 @@ public class UserEbookController {
     @GetMapping("/public-library")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ApiResponse<List<PublicLibraryResponse>>> publicLibrary() {
-        return ResponseEntity.ok(ApiResponse.success("Public library retrieved", publicLibraryService.listPublicItems()));
+        return ResponseEntity
+                .ok(ApiResponse.success("Public library retrieved", publicLibraryService.listPublicItems()));
     }
 
     @GetMapping("/library")
@@ -170,7 +186,8 @@ public class UserEbookController {
     public ResponseEntity<byte[]> downloadBook(@AuthenticationPrincipal User user,
             @PathVariable UUID bookId) throws Exception {
         // Get download details and check access
-        BookDownloadService.BookDownloadDetails downloadDetails = bookDownloadService.getDownloadDetails(user.getUserId(), bookId);
+        BookDownloadService.BookDownloadDetails downloadDetails = bookDownloadService
+                .getDownloadDetails(user.getUserId(), bookId);
 
         String fileKey = downloadDetails.getFileKey();
         if (isExternalUrl(fileKey)) {
@@ -194,16 +211,19 @@ public class UserEbookController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadDetails.getFilename() + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + downloadDetails.getFilename() + "\"")
                 .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(fileContent.length))
                 .body(fileContent);
     }
 
     @GetMapping("/books/{bookId}/download-info")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public ResponseEntity<ApiResponse<BookDownloadService.BookDownloadDetails>> getDownloadInfo(@AuthenticationPrincipal User user,
+    public ResponseEntity<ApiResponse<BookDownloadService.BookDownloadDetails>> getDownloadInfo(
+            @AuthenticationPrincipal User user,
             @PathVariable UUID bookId) {
-        BookDownloadService.BookDownloadDetails downloadDetails = bookDownloadService.getDownloadDetails(user.getUserId(), bookId);
+        BookDownloadService.BookDownloadDetails downloadDetails = bookDownloadService
+                .getDownloadDetails(user.getUserId(), bookId);
         return ResponseEntity.ok(ApiResponse.success("Download information retrieved", downloadDetails));
     }
 
