@@ -3,7 +3,6 @@ package com.masukibooks.controller;
 import com.masukibooks.dto.request.*;
 import com.masukibooks.dto.response.*;
 import com.masukibooks.entity.User;
-import com.masukibooks.entity.UserRole;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.service.*;
 import jakarta.validation.Valid;
@@ -48,8 +47,6 @@ public class UserEbookController {
         // previously received categories
         // without bookCount populated, causing categories to render as empty on the
         // public UI.
-        boolean adminUser = user != null && UserRole.ADMIN.equals(user.getRole());
-
         List<CategoryResponse> dtos = categoryService.getCategoriesWithBookCount();
 
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved", dtos));
