@@ -33,6 +33,11 @@ public class CartService {
     @Transactional
     public CartResponse getOrCreateCartForUser(UUID userId) {
         Cart cart = cartRepository.findByUserUserIdAndStatus(userId, "active")
+                .or(() -> cartRepository.findByUserUserIdAndStatus(userId, "checkout_pending")
+                        .map(pending -> {
+                            pending.setStatus("active");
+                            return cartRepository.save(pending);
+                        }))
                 .orElseGet(() -> {
                     User user = userRepository.findById(userId)
                             .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -45,6 +50,11 @@ public class CartService {
     @Transactional
     public CartResponse getOrCreateGuestCart(String guestToken) {
         Cart cart = cartRepository.findByGuestTokenAndStatus(guestToken, "active")
+                .or(() -> cartRepository.findByGuestTokenAndStatus(guestToken, "checkout_pending")
+                        .map(pending -> {
+                            pending.setStatus("active");
+                            return cartRepository.save(pending);
+                        }))
                 .orElseGet(() -> {
                     Cart c = Cart.builder().guestToken(guestToken).status("active").build();
                     return cartRepository.save(c);

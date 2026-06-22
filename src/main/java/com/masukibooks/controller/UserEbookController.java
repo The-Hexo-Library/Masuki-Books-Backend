@@ -3,7 +3,6 @@ package com.masukibooks.controller;
 import com.masukibooks.dto.request.*;
 import com.masukibooks.dto.response.*;
 import com.masukibooks.entity.User;
-import com.masukibooks.entity.UserRole;
 import com.masukibooks.exception.BusinessException;
 import com.masukibooks.service.*;
 import jakarta.validation.Valid;
@@ -34,6 +33,7 @@ public class UserEbookController {
     private final CartService cartService;
     private final OrderService orderService;
     private final CheckoutFlowService checkoutFlowService;
+    private final RazorpayPaymentService razorpayPaymentService;
     private final SubscriptionService subscriptionService;
     private final PublicLibraryService publicLibraryService;
     private final UserLibraryService userLibraryService;
@@ -47,8 +47,6 @@ public class UserEbookController {
         // previously received categories
         // without bookCount populated, causing categories to render as empty on the
         // public UI.
-        boolean adminUser = user != null && UserRole.ADMIN.equals(user.getRole());
-
         List<CategoryResponse> dtos = categoryService.getCategoriesWithBookCount();
 
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved", dtos));
@@ -100,9 +98,6 @@ public class UserEbookController {
     public ResponseEntity<ApiResponse<CheckoutFlowResponse>> checkout(@AuthenticationPrincipal User user,
             @Valid @RequestBody UserCheckoutRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Checkout completed and payment initiated",
-<<<<<<< Updated upstream
-                checkoutFlowService.checkoutAndInitiate(user.getUserId(), request)));
-=======
                 checkoutFlowService.checkoutAndInitiate(user.getUserId(), null, request)));
     }
 
@@ -114,7 +109,6 @@ public class UserEbookController {
                 request.getRazorpayPaymentId(),
                 request.getRazorpaySignature());
         return ResponseEntity.ok(ApiResponse.success("Payment verified successfully", null));
->>>>>>> Stashed changes
     }
 
     @GetMapping("/subscriptions/plans")

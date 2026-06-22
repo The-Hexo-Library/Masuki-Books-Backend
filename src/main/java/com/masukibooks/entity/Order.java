@@ -85,6 +85,15 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments;
 
+    @Column(name = "payment_status", length = 30)
+    private String paymentStatus;
+
+    @Column(name = "checkout_fingerprint", length = 128)
+    private String checkoutFingerprint;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     // @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch =
     // FetchType.LAZY)
     // private List<Shipment> shipments;
