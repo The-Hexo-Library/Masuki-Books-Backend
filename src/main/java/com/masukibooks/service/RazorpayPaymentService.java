@@ -33,11 +33,14 @@ public class RazorpayPaymentService {
     ) {}
 
     private RazorpayClient client() throws RazorpayException {
-        if (razorpayProperties.getKeyId() == null || razorpayProperties.getKeyId().isBlank()
-                || razorpayProperties.getKeySecret() == null || razorpayProperties.getKeySecret().isBlank()) {
+        String kid = razorpayProperties.getKeyId();
+        String ksec = razorpayProperties.getKeySecret();
+        System.out.println("Razorpay init - Key ID: [" + kid + "] (len: " + (kid == null ? 0 : kid.length()) + "), Secret: [" + (ksec == null ? "null" : ksec.substring(0, Math.min(4, ksec.length())) + "...") + "] (len: " + (ksec == null ? 0 : ksec.length()) + ")");
+        if (kid == null || kid.isBlank()
+                || ksec == null || ksec.isBlank()) {
             throw new IllegalStateException("Razorpay is not configured. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
         }
-        return new RazorpayClient(razorpayProperties.getKeyId(), razorpayProperties.getKeySecret());
+        return new RazorpayClient(kid, ksec);
     }
 
     @Transactional
