@@ -39,18 +39,15 @@ public class UserEbookController {
     private final UserLibraryService userLibraryService;
     private final BookDownloadService bookDownloadService;
     private final BookStorageService bookStorageService;
+    private final RazorpayPaymentService razorpayPaymentService;
 
     @GetMapping("/categories")
     public ResponseEntity<ApiResponse<List<CategoryResponse>>> categories(@AuthenticationPrincipal User user) {
         // Always return categories WITH book counts.
         // The frontend filters categories using (bookCount > 0), but non-admin
-        // previously received categories
-        // without bookCount populated, causing categories to render as empty on the
-        // public UI.
-        boolean adminUser = user != null && UserRole.ADMIN.equals(user.getRole());
-
+        // previously received categories without bookCount populated,
+        // causing categories to render as empty on the public UI.
         List<CategoryResponse> dtos = categoryService.getCategoriesWithBookCount();
-
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved", dtos));
     }
 
@@ -100,21 +97,14 @@ public class UserEbookController {
     public ResponseEntity<ApiResponse<CheckoutFlowResponse>> checkout(@AuthenticationPrincipal User user,
             @Valid @RequestBody UserCheckoutRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Checkout completed and payment initiated",
-<<<<<<< Updated upstream
                 checkoutFlowService.checkoutAndInitiate(user.getUserId(), request)));
-=======
-                checkoutFlowService.checkoutAndInitiate(user.getUserId(), null, request)));
     }
 
     @PostMapping("/checkout/verify")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> verifyCheckout(@Valid @RequestBody RazorpayVerifyRequest request) {
-        razorpayPaymentService.verifyAndCompletePayment(
-                request.getRazorpayOrderId(),
-                request.getRazorpayPaymentId(),
-                request.getRazorpaySignature());
+    public ResponseEntity<ApiResponse<Void>> verifyCheckout(@Valid @RequestBody RazorpayVerifyPaymentRequest request) {
+        razorpayPaymentService.verifyAndCompletePayment(request);
         return ResponseEntity.ok(ApiResponse.success("Payment verified successfully", null));
->>>>>>> Stashed changes
     }
 
     @GetMapping("/subscriptions/plans")
@@ -185,7 +175,6 @@ public class UserEbookController {
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<byte[]> downloadBook(@AuthenticationPrincipal User user,
             @PathVariable UUID bookId) throws Exception {
-        // Get download details and check access
         BookDownloadService.BookDownloadDetails downloadDetails = bookDownloadService
                 .getDownloadDetails(user.getUserId(), bookId);
 
@@ -196,14 +185,11 @@ public class UserEbookController {
                     .build();
         }
 
-        // Stream the file from S3
         InputStream fileStream = bookStorageService.downloadBookFile(fileKey);
 
-        // Read the file content
         byte[] fileContent = fileStream.readAllBytes();
         fileStream.close();
 
-        // Determine content type
         String contentType = "application/pdf";
         if ("epub".equalsIgnoreCase(downloadDetails.getFileFormat())) {
             contentType = "application/epub+zip";
