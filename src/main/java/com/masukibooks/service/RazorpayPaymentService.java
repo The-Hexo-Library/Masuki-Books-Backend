@@ -35,22 +35,31 @@ public class RazorpayPaymentService {
     @Value("${razorpay.key-secret:}")
     private String keySecret;
 
+    @Value("${razorpay.currency:INR}")
+    private String defaultCurrency;
+
     /** Exposes the public Razorpay key id so the frontend can open the checkout widget. */
     public String getKeyId() {
         return keyId;
+    }
+
+    /** Default currency used when a request does not specify one. */
+    public String getDefaultCurrency() {
+        return (defaultCurrency == null || defaultCurrency.isBlank()) ? "INR" : defaultCurrency;
     }
 
     /**
      * Creates a Razorpay order for the given internal order.
      * This method is used by POST /api/create-order.
      */
-    public Map<String, Object> createOrder(long amountPaise, String receipt, String internalOrderId) {
+    public Map<String, Object> createOrder(long amountPaise, String currency, String receipt, String internalOrderId) {
         if (amountPaise < 100) {
             throw new IllegalArgumentException("Minimum amount is 100 paise.");
         }
         if (keyId == null || keyId.isBlank()) {
             throw new IllegalStateException("Razorpay key id not configured.");
         }
+        String resolvedCurrency = (currency == null || currency.isBlank()) ? getDefaultCurrency() : currency;
         if (receipt == null || receipt.isBlank()) {
             throw new IllegalArgumentException("receipt is required.");
         }
@@ -62,7 +71,7 @@ public class RazorpayPaymentService {
             // Razorpay expects: amount (paise), currency, receipt
             Map<String, Object> payload = Map.of(
                     "amount", amountPaise,
-                    "currency", "INR",
+                    "currency", resolvedCurrency,
                     "receipt", receipt);
 
             return restClient.post()

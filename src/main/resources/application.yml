@@ -63,12 +63,12 @@ storage:
     max-file-size: ${S3_MAX_FILE_SIZE:52428800}
     public-url-prefix: ${S3_PUBLIC_URL_PREFIX:https://bbrxdsaojiqdgrdyghih.supabase.co/storage/v1/s3/public/test_bucket}
 
-# Razorpay payment gateway (live keypair).
+# Razorpay payment gateway (test keypair for local development).
 # Override with RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET env vars in production.
 # key-id and key-secret must always come from the SAME Razorpay keypair.
 razorpay:
-  key-id: ${RAZORPAY_KEY_ID:rzp_live_T7sSXoYHp4a1Q2}
-  key-secret: ${RAZORPAY_KEY_SECRET:esj6P00RDh8DOowJBJwbv5SO}
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_T5v7sD2xKGQLfH}
+  key-secret: ${RAZORPAY_KEY_SECRET:wm9hXw06PeI0igIcmOBuac2M}
   currency: ${RAZORPAY_CURRENCY:INR}
 
 app:

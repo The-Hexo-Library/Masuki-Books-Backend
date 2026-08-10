@@ -101,13 +101,13 @@ public class UserEbookController {
                 checkoutFlowService.checkoutAndInitiate(user.getUserId(), request)));
     }
 
-        @GetMapping("/payment/quote")
-        @PreAuthorize("hasAnyRole('USER','ADMIN')")
-        public ResponseEntity<ApiResponse<PaymentQuoteResponse>> paymentQuote(@AuthenticationPrincipal User user,
+    @GetMapping("/payment/quote")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
+    public ResponseEntity<ApiResponse<PaymentQuoteResponse>> paymentQuote(@AuthenticationPrincipal User user,
             @RequestParam String gateway) {
         return ResponseEntity.ok(ApiResponse.success("Payment quote retrieved",
             paymentQuoteService.quoteForUser(user.getUserId(), gateway)));
-        }
+    }
 
     @PostMapping("/checkout/verify")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")

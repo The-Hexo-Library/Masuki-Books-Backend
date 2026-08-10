@@ -27,6 +27,7 @@ public class RazorpayCheckoutController {
             long amountPaise = request.getAmount();
             Map<String, Object> razorpayOrder = razorpayPaymentService.createOrder(
                     amountPaise,
+                    request.getCurrency(),
                     request.getReceipt(),
                     request.getInternalOrderId());
 
