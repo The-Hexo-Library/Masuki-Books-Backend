@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,27 +28,50 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
 
+    public static class CartSnapshot {
+        private final Cart cart;
+        private final List<CartItem> items;
+        private final BigDecimal subtotalUsd;
+
+        public CartSnapshot(Cart cart, List<CartItem> items, BigDecimal subtotalUsd) {
+            this.cart = cart;
+            this.items = items;
+            this.subtotalUsd = subtotalUsd;
+        }
+
+        public Cart getCart() {
+            return cart;
+        }
+
+        public List<CartItem> getItems() {
+            return items;
+        }
+
+        public BigDecimal getSubtotalUsd() {
+            return subtotalUsd;
+        }
+    }
+
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
     private final OrderItemRepository orderItemRepository;
 
     @Transactional
-    public OrderResponse checkout(UUID userId, String guestToken, CheckoutRequest request) {
-        Cart cart;
-        if (userId != null) {
-            cart = cartRepository.findByUserUserIdAndStatus(userId, "active")
-                    .orElseThrow(() -> new ResourceNotFoundException("Active cart not found"));
-        } else {
-            cart = cartRepository.findByGuestTokenAndStatus(guestToken, "active")
-                    .orElseThrow(() -> new ResourceNotFoundException("Active cart not found"));
+    public OrderResponse checkout(UUID userId, String guestToken, CheckoutRequest request, String resolvedCurrency,
+            BigDecimal exchangeRate) {
+        CartSnapshot snapshot = previewCart(userId, guestToken);
+        Cart cart = snapshot.getCart();
+        List<CartItem> items = snapshot.getItems();
+        BigDecimal subtotalUsd = snapshot.getSubtotalUsd();
+        String currency = (resolvedCurrency == null || resolvedCurrency.isBlank()) ? "USD" : resolvedCurrency.trim()
+                .toUpperCase();
+        BigDecimal effectiveExchangeRate = exchangeRate == null ? BigDecimal.ONE : exchangeRate;
+
+        if (!"USD".equals(currency) && effectiveExchangeRate.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("A positive exchange rate is required for non-USD checkout.");
         }
 
-        List<CartItem> items = cart.getItems();
-        if (items == null || items.isEmpty()) {
-            throw new BusinessException("Cart is empty");
-        }
-
-        BigDecimal subtotal = BigDecimal.ZERO;
+        BigDecimal subtotal = convertAmount(subtotalUsd, currency, effectiveExchangeRate);
         boolean allDigital = true;
         boolean hasDigital = false;
 
@@ -60,8 +84,6 @@ public class OrderService {
             } else {
                 allDigital = false;
             }
-
-            subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
         }
 
         String orderType = allDigital ? "digital" : (hasDigital ? "mixed" : "physical");
@@ -109,7 +131,7 @@ public class OrderService {
                 .discountAmount(discountAmount)
                 // .shippingAmount(shippingAmount)
                 .totalAmount(total)
-                .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
+                .currency(currency)
                 .status("pending")
                 .build();
 
@@ -117,12 +139,16 @@ public class OrderService {
         final UUID orderId = order.getOrderId();
 
         for (CartItem item : items) {
+            BigDecimal itemUnitPrice = convertAmount(item.getUnitPrice(), currency, effectiveExchangeRate);
+            BigDecimal itemTotalPrice = convertAmount(
+                item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())), currency,
+                effectiveExchangeRate);
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .product(item.getProduct())
                     .quantity(item.getQuantity())
-                    .unitPrice(item.getUnitPrice())
-                    .totalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .unitPrice(itemUnitPrice)
+                .totalPrice(itemTotalPrice)
                     .productTitle(item.getProduct().getTitle())
                     .build();
             orderItemRepository.save(orderItem);
@@ -133,6 +159,39 @@ public class OrderService {
         cartRepository.save(cart);
 
         return toResponse(orderRepository.findById(orderId).get());
+    }
+
+    public CartSnapshot previewCart(UUID userId, String guestToken) {
+        Cart cart;
+        if (userId != null) {
+            cart = cartRepository.findByUserUserIdAndStatus(userId, "active")
+                    .orElseThrow(() -> new ResourceNotFoundException("Active cart not found"));
+        } else {
+            cart = cartRepository.findByGuestTokenAndStatus(guestToken, "active")
+                    .orElseThrow(() -> new ResourceNotFoundException("Active cart not found"));
+        }
+
+        List<CartItem> items = cart.getItems();
+        if (items == null || items.isEmpty()) {
+            throw new BusinessException("Cart is empty");
+        }
+
+        BigDecimal subtotalUsd = BigDecimal.ZERO;
+        for (CartItem item : items) {
+            subtotalUsd = subtotalUsd.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+
+        return new CartSnapshot(cart, items, subtotalUsd);
+    }
+
+    private BigDecimal convertAmount(BigDecimal amountUsd, String currency, BigDecimal exchangeRate) {
+        if (amountUsd == null) {
+            return BigDecimal.ZERO;
+        }
+        if (currency == null || currency.isBlank() || "USD".equalsIgnoreCase(currency)) {
+            return amountUsd.setScale(2, RoundingMode.HALF_UP);
+        }
+        return amountUsd.multiply(exchangeRate).setScale(2, RoundingMode.HALF_UP);
     }
 
     public Page<OrderResponse> getUserOrders(UUID userId, Pageable pageable) {

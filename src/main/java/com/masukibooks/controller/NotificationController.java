@@ -2,6 +2,7 @@ package com.masukibooks.controller;
 
 import com.masukibooks.dto.response.ApiResponse;
 import com.masukibooks.dto.response.NotificationResponse;
+import com.masukibooks.entity.User;
 import com.masukibooks.entity.UserRole;
 import com.masukibooks.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,9 @@ public class NotificationController {
             return ResponseEntity.ok(ApiResponse.success("Notifications retrieved", notificationService.getNotificationsForAdmin()));
         }
         UUID userId = extractUserId(authentication);
+        if (userId == null) {
+            return ResponseEntity.status(401).body(ApiResponse.success("Unauthorized", null));
+        }
         return ResponseEntity.ok(ApiResponse.success("Notifications retrieved", notificationService.getNotificationsForUser(userId)));
     }
 
@@ -44,6 +48,9 @@ public class NotificationController {
             count = notificationService.getUnreadCountForAdmin();
         } else {
             UUID userId = extractUserId(authentication);
+            if (userId == null) {
+                return ResponseEntity.status(401).body(ApiResponse.success("Unauthorized", null));
+            }
             count = notificationService.getUnreadCountForUser(userId);
         }
         return ResponseEntity.ok(ApiResponse.success("Unread count", Map.of("count", count)));
@@ -65,6 +72,16 @@ public class NotificationController {
     }
 
     private UUID extractUserId(Authentication authentication) {
-        return UUID.fromString(authentication.getName());
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        if (authentication.getPrincipal() instanceof User user) {
+            return user.getUserId();
+        }
+        try {
+            return UUID.fromString(authentication.getName());
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

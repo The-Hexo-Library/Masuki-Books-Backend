@@ -21,6 +21,5 @@ public class CheckoutRequest {
 
     private String guestEmail; // for guest checkout
 
-    @NotBlank
     private String currency;
 }
