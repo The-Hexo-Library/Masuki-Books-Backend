@@ -88,7 +88,7 @@ public class RazorpayPaymentService {
             if (ex.getStatusCode().value() == 401) {
                 // Surfaced as 400 (not 401) so the SPA does not treat it as an expired session.
                 throw new IllegalArgumentException(
-                        "Razorpay authentication failed. Verify RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are a valid Razorpay test keypair.");
+                        "Razorpay authentication failed. Verify RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are valid Razorpay keys from the same keypair.");
             }
             throw new IllegalArgumentException("Razorpay rejected the order. " + body);
         } catch (RestClientException ex) {

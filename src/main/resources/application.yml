@@ -2,6 +2,8 @@ server:
   port: ${PORT:8081}
 
 spring:
+  config:
+    import: optional:file:./.env[.properties]
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   
@@ -63,12 +65,12 @@ storage:
     max-file-size: ${S3_MAX_FILE_SIZE:52428800}
     public-url-prefix: ${S3_PUBLIC_URL_PREFIX:https://bbrxdsaojiqdgrdyghih.supabase.co/storage/v1/s3/public/test_bucket}
 
-# Razorpay payment gateway (test keypair for local development).
-# Override with RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET env vars in production.
+# Razorpay payment gateway.
+# Use live keys in the deployment environment; do not keep test fallback values here.
 # key-id and key-secret must always come from the SAME Razorpay keypair.
 razorpay:
-  key-id: ${RAZORPAY_KEY_ID:rzp_test_T5v7sD2xKGQLfH}
-  key-secret: ${RAZORPAY_KEY_SECRET:wm9hXw06PeI0igIcmOBuac2M}
+  key-id: ${RAZORPAY_KEY_ID:}
+  key-secret: ${RAZORPAY_KEY_SECRET:}
   currency: ${RAZORPAY_CURRENCY:INR}
 
 app:
