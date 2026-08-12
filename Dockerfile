@@ -1,22 +1,23 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1
 
-FROM maven:3.9.9-eclipse-temurin-21 AS build
-WORKDIR /workspace
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
+WORKDIR /app
 
-COPY pom.xml ./
-RUN mvn -B -q dependency:go-offline
+# Cache dependencies first for faster rebuilds.
+COPY pom.xml .
+RUN mvn -q -DskipTests dependency:go-offline
 
 COPY src ./src
-COPY src/main/resources ./src/main/resources
-RUN mvn -B -DskipTests clean package
+RUN mvn -q -DskipTests clean package
 
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
+# Default to production profile; can be overridden at runtime.
+ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_OPTS=""
-ENV PORT=8081
 
-COPY --from=build /workspace/target/*.jar /app/app.jar
+COPY --from=builder /app/target/masukibooks-backend-1.0.0.jar app.jar
 
 EXPOSE 8081
 
