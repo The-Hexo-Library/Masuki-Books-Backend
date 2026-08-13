@@ -1,28 +1,23 @@
-# Stage 1: Build the Spring Boot application
+# syntax=docker/dockerfile:1.7
+
 FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
 
-WORKDIR /app
-
-# Copy Maven configuration
 COPY pom.xml ./
+RUN mvn -B -q dependency:go-offline
 
-# Download dependencies
-RUN mvn -B -DskipTests dependency:go-offline
-
-# Copy application source
 COPY src ./src
-
-# Build the application
+COPY src/main/resources ./src/main/resources
 RUN mvn -B -DskipTests clean package
 
-# Stage 2: Run the application
-FROM eclipse-temurin:21-jre-jammy AS runtime
-
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
-# Copy the generated JAR
-COPY --from=build /app/target/*.jar app.jar
+ENV JAVA_OPTS=""
+ENV PORT=8081
 
-EXPOSE 8080
+COPY --from=build /workspace/target/*.jar /app/app.jar
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+EXPOSE 8081
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
